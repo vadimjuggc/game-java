@@ -1,54 +1,56 @@
 package com.mygame.game.entities;
 
-import javafx.scene.shape.Rectangle;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.geometry.Bounds;
+import java.net.URL;
 
 public abstract class Entity {
-    protected double x,y;
-    protected double width, height;
-    protected Rectangle rectangle;
 
-    public Entity(double x, double y, double width, double height) {
+    protected ImageView sprite;
+    protected double x, y;
+    protected double width, height;
+
+    public Entity(Image image, double x, double y, double width, double height) {
+        this.sprite = new ImageView(image);
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
 
-        this.rectangle = new Rectangle(x,y,width,height);
+        sprite.setFitWidth(width);
+        sprite.setFitHeight(height);
+        sprite.setPreserveRatio(false);
+        sprite.setX(x);
+        sprite.setY(y);
     }
 
     public abstract void update(double deltaTime);
 
-    public Rectangle getRectangle() {
-        return rectangle;
-    }
+    public ImageView getSprite() { return sprite; }
 
-    public double getX() {
-        return x;
-    }
-    public double getY() {
-        return y;
-    }
+    public double getX() { return x; }
+    public double getY() { return y; }
+    public double getWidth() { return width; }
+    public double getHeight() { return height; }
 
-    public double getHeight() {
-        return height;
-    }
-
-    public double getWidth() {
-        return width;
-    }
-
-    public void setPosition(double x, double y)
-    {
+    public void setPosition(double x, double y) {
         this.x = x;
         this.y = y;
-        rectangle.setX(this.x);
-        rectangle.setY(this.y);
+        sprite.setX(x);
+        sprite.setY(y);
     }
 
-    public boolean collidesWith(Entity other) {
-        return rectangle.getBoundsInParent().intersects(
-                other.rectangle.getBoundsInParent()
-        );
+    public Bounds getBounds() {
+        return sprite.getBoundsInParent();
     }
 
+    protected static Image loadImage(String path, double width, double height) {
+        URL url = Entity.class.getResource(path);
+        if (url == null) {
+            System.out.println("Не найден файл: " + path);
+            return null;
+        }
+        return new Image(url.toString());
+    }
 }

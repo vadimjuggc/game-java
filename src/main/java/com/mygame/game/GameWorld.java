@@ -5,6 +5,7 @@ import javafx.scene.layout.Pane;
 import com.mygame.game.entities.Player;
 import com.mygame.game.entities.Enemy;
 import com.mygame.game.entities.Platform;
+import com.mygame.game.ui.GameUI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Iterator;
@@ -16,6 +17,7 @@ public class GameWorld {
     private Player player;
     private List<Enemy> enemies;
     private Level level;
+    private GameUI gameUI;
     private Random random = new Random();
 
     private double spawnTimer = 0;
@@ -31,7 +33,9 @@ public class GameWorld {
 
         // Создаем игрока на стартовой позиции
         this.player = new Player(level.getStartX(), level.getStartY());
-        root.getChildren().add(player.getRectangle());
+        root.getChildren().add(player.getSprite());
+
+        this.gameUI = new GameUI(root);
 
         // Создаем первого врага
         spawnEnemy();
@@ -55,8 +59,9 @@ public class GameWorld {
             Enemy enemy = enemyIterator.next();
 
             if (enemy.isDead()) {
+                gameUI.addScore(10);
                 enemyIterator.remove();
-                root.getChildren().remove(enemy.getRectangle());
+                root.getChildren().remove(enemy.getSprite());
                 continue;
             }
 
@@ -74,7 +79,7 @@ public class GameWorld {
             spawnTimer = 0;
             spawnEnemy();
         }
-
+        gameUI.updateHealth(player.getHealth());
         // Проверяем смерть игрока
         if (player.isDead() && !gameOver) {
             gameOver = true;
@@ -86,7 +91,8 @@ public class GameWorld {
         boolean onPlatform = false;
 
         for (Platform platform : level.getPlatforms()) {
-            // Проверяем, падает ли entity на платформу
+            // ========== ПРОВЕРКА ПРИЗЕМЛЕНИЯ (сверху) ==========
+            // Игрок падает на платформу
             if (entity.getY() + entity.getHeight() >= platform.getY() &&
                     entity.getY() + entity.getHeight() <= platform.getY() + 10 &&
                     oldY + entity.getHeight() <= platform.getY() && // был выше
@@ -100,6 +106,25 @@ public class GameWorld {
                 }
                 onPlatform = true;
                 break;
+            }
+
+            // ========== НОВАЯ ПРОВЕРКА: СТОЛКНОВЕНИЕ СНИЗУ ==========
+            // Игрок упирается в платформу головой (двигается вверх)
+            if (entity.getY() <= platform.getY() + platform.getHeight() &&
+                    entity.getY() >= platform.getY() + platform.getHeight() - 10 &&
+                    oldY >= platform.getY() + platform.getHeight() && // был ниже
+                    entity.getX() + entity.getWidth() > platform.getX() &&
+                    entity.getX() < platform.getX() + platform.getWidth()) {
+
+                // Ставим игрока прямо под платформой
+                entity.setPosition(entity.getX(), platform.getY() + platform.getHeight());
+
+                // Обнуляем вертикальную скорость (останавливаем движение вверх)
+                if (entity instanceof Player) {
+                    ((Player) entity).stopVerticalMovement();
+                } else if (entity instanceof Enemy) {
+                    ((Enemy) entity).stopVerticalMovement();
+                }
             }
         }
 
@@ -130,14 +155,14 @@ public class GameWorld {
 
             // Проверяем атаку игрока
             if (player.isAttacking() &&
-                    player.getAttackBounds().intersects(enemy.getRectangle().getBoundsInParent())) {
+                    player.getAttackBounds().intersects(enemy.getSprite().getBoundsInParent())) {
                 enemy.takeDamage(player.getAttackDamage());
                 System.out.println("Попал по врагу! Осталось здоровья: " + enemy.getHealth());
             }
 
             // Проверяем столкновение игрока с врагом
-            if (player.getRectangle().getBoundsInParent().intersects(
-                    enemy.getRectangle().getBoundsInParent())) {
+            if (player.getSprite().getBoundsInParent().intersects(
+                    enemy.getSprite().getBoundsInParent())) {
 
                 player.takeDamage(enemy.getDamage());
                 System.out.println("Игрок получил урон! Здоровье: " + player.getHealth());
@@ -157,10 +182,11 @@ public class GameWorld {
 
         Enemy enemy = new Enemy(x, y, player);
         enemies.add(enemy);
-        root.getChildren().add(enemy.getRectangle());
+        root.getChildren().add(enemy.getSprite());
 
         System.out.println("Появился новый враг!");
     }
 
     public Player getPlayer() { return player; }
+    public GameUI getGameUI() { return gameUI; }
 }
