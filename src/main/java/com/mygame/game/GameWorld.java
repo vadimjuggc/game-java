@@ -5,6 +5,7 @@ import javafx.scene.layout.Pane;
 import com.mygame.game.entities.Player;
 import com.mygame.game.entities.Enemy;
 import com.mygame.game.entities.Platform;
+import com.mygame.game.utils.SoundManager;
 import com.mygame.game.ui.GameUI;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,12 +19,17 @@ public class GameWorld {
     private List<Enemy> enemies;
     private Level level;
     private GameUI gameUI;
+    private SoundManager soundManager;  // ← добавить
     private Random random = new Random();
 
     private double spawnTimer = 0;
     private boolean gameOver = false;
 
     public GameWorld(Pane root) {
+        this.root = root;
+        this.enemies = new ArrayList<>();
+
+        this.soundManager = new SoundManager();
         this.root = root;
         this.enemies = new ArrayList<>();
 
@@ -34,7 +40,7 @@ public class GameWorld {
         // Создаем игрока на стартовой позиции
         this.player = new Player(level.getStartX(), level.getStartY());
         root.getChildren().add(player.getSprite());
-
+        root.getChildren().add(player.getWeaponSprite());
         this.gameUI = new GameUI(root);
 
         // Создаем первого врага
@@ -157,6 +163,7 @@ public class GameWorld {
             if (player.isAttacking() &&
                     player.getAttackBounds().intersects(enemy.getSprite().getBoundsInParent())) {
                 enemy.takeDamage(player.getAttackDamage());
+                soundManager.playAttackSound();
                 System.out.println("Попал по врагу! Осталось здоровья: " + enemy.getHealth());
             }
 
@@ -165,6 +172,7 @@ public class GameWorld {
                     enemy.getSprite().getBoundsInParent())) {
 
                 player.takeDamage(enemy.getDamage());
+                soundManager.playHitSound();
                 System.out.println("Игрок получил урон! Здоровье: " + player.getHealth());
 
                 // Отталкиваем врага

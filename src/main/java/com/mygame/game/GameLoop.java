@@ -18,7 +18,6 @@ public class GameLoop extends AnimationTimer{
     public void setupKeyHandlers(Scene scene) {
         scene.setOnKeyPressed(event -> {
             keysPressed.add(event.getCode());
-            // Для отладки
             if (event.getCode() == KeyCode.P) {
                 System.out.println("Игрок позиция: " +
                         gameWorld.getPlayer().getX() + ", " + gameWorld.getPlayer().getY());
