@@ -11,6 +11,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Iterator;
 import java.util.Random;
+import javafx.scene.control.Label;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.paint.Color;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 public class GameWorld {
 
@@ -21,7 +27,6 @@ public class GameWorld {
     private GameUI gameUI;
     private SoundManager soundManager;  // ← добавить
     private Random random = new Random();
-
     private double spawnTimer = 0;
     private boolean gameOver = false;
 
@@ -79,26 +84,68 @@ public class GameWorld {
         // Проверяем столкновения между игроком и врагами
         checkCombatCollisions();
 
-        // Спавним новых врагов
         spawnTimer += deltaTime;
         if (spawnTimer > 5.0) { // каждые 5 секунд
             spawnTimer = 0;
             spawnEnemy();
         }
         gameUI.updateHealth(player.getHealth());
-        // Проверяем смерть игрока
         if (player.isDead() && !gameOver) {
             gameOver = true;
+            showGameOverScreen();
             System.out.println("GAME OVER!");
         }
+    }
+
+    public void restart() {
+        root.getChildren().clear();
+        gameOver = false;
+        spawnTimer = 0;
+        level = new Level();
+        level.addToPane(root);
+        player = new Player(level.getStartX(), level.getStartY());
+        root.getChildren().add(player.getSprite());
+        root.getChildren().add(player.getWeaponSprite());
+        gameUI = new GameUI(root);
+        enemies.clear();
+        spawnEnemy();
+    }
+
+    public boolean isGameOver()
+    {
+        return gameOver;
+    }
+
+    private void showGameOverScreen() {
+        // Загружаем картинку Game Over
+        Image gameOverImage = new Image(getClass().getResourceAsStream("/images/ui/game_over.png"));
+        ImageView gameOverView = new ImageView(gameOverImage);
+        gameOverView.setFitWidth(300);
+        gameOverView.setPreserveRatio(true);
+        gameOverView.setX(800/2 - 150);
+        gameOverView.setY(600/2 - 200);
+
+        // Счёт
+        Label scoreLabel = new Label("Score: " + gameUI.getScore());
+        scoreLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        scoreLabel.setTextFill(Color.BLACK);
+        scoreLabel.setLayoutX(800/2 - 50);
+        scoreLabel.setLayoutY(600/2 + 20);
+
+        // Текст рестарта
+        Label restartLabel = new Label("Press R to restart");
+        restartLabel.setFont(Font.font("Arial",FontWeight.BOLD, 18));
+        restartLabel.setTextFill(Color.BLUEVIOLET);
+        restartLabel.setLayoutX(800/2 - 80);
+        restartLabel.setLayoutY(600/2 + 60);             // поднял (было +100)
+
+        root.getChildren().addAll(gameOverView, scoreLabel, restartLabel);
     }
 
     private void checkPlatformCollisions(Entity entity, double oldY) {
         boolean onPlatform = false;
 
         for (Platform platform : level.getPlatforms()) {
-            // ========== ПРОВЕРКА ПРИЗЕМЛЕНИЯ (сверху) ==========
-            // Игрок падает на платформу
             if (entity.getY() + entity.getHeight() >= platform.getY() &&
                     entity.getY() + entity.getHeight() <= platform.getY() + 10 &&
                     oldY + entity.getHeight() <= platform.getY() && // был выше
@@ -114,18 +161,14 @@ public class GameWorld {
                 break;
             }
 
-            // ========== НОВАЯ ПРОВЕРКА: СТОЛКНОВЕНИЕ СНИЗУ ==========
-            // Игрок упирается в платформу головой (двигается вверх)
             if (entity.getY() <= platform.getY() + platform.getHeight() &&
                     entity.getY() >= platform.getY() + platform.getHeight() - 10 &&
                     oldY >= platform.getY() + platform.getHeight() && // был ниже
                     entity.getX() + entity.getWidth() > platform.getX() &&
                     entity.getX() < platform.getX() + platform.getWidth()) {
 
-                // Ставим игрока прямо под платформой
                 entity.setPosition(entity.getX(), platform.getY() + platform.getHeight());
 
-                // Обнуляем вертикальную скорость (останавливаем движение вверх)
                 if (entity instanceof Player) {
                     ((Player) entity).stopVerticalMovement();
                 } else if (entity instanceof Enemy) {
@@ -134,7 +177,6 @@ public class GameWorld {
             }
         }
 
-        // Если не на платформе, entity падает
         if (!onPlatform) {
             if (entity instanceof Player) {
                 ((Player) entity).setOnGround(false);
@@ -143,7 +185,6 @@ public class GameWorld {
             }
         }
 
-        // Не падать ниже пола
         if (entity.getY() + entity.getHeight() > 600) {
             if (entity instanceof Player) {
                 ((Player) entity).landOnPlatform(600);
@@ -175,19 +216,17 @@ public class GameWorld {
                 soundManager.playHitSound();
                 System.out.println("Игрок получил урон! Здоровье: " + player.getHealth());
 
-                // Отталкиваем врага
                 double dx = enemy.getX() - player.getX();
-                if (dx > 0) enemy.setPosition(enemy.getX() + 50, enemy.getY());
-                else enemy.setPosition(enemy.getX() - 50, enemy.getY());
+                if (dx > 0) enemy.setPosition(enemy.getX() + 25, enemy.getY());
+                else enemy.setPosition(enemy.getX() - 25, enemy.getY());
             }
         }
     }
 
     private void spawnEnemy() {
-        // Спавним врага где-то на платформе
-        double x = 100 + random.nextInt(600);
-        double y = 100; // временно, потом скорректируем
-
+       double platformList[][] = {{ 100, 430 }, { 200, 430 }, { 580, 430 }, { 680, 430 }, { 340, 380 }, { 440, 380 }, { 450, 330 }, { 530, 330 }};
+        double x = platformList[random.nextInt(8)][0];
+        double y = platformList[random.nextInt(8)][1];
         Enemy enemy = new Enemy(x, y, player);
         enemies.add(enemy);
         root.getChildren().add(enemy.getSprite());

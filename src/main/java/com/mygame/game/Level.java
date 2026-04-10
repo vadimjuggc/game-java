@@ -34,7 +34,6 @@ public class Level {
         // Высокие платформы (на 200 пикселей выше пола)
         platforms.add(new Platform(450, 550 - 200, 100, 20));   // y = 350
 
-        // Стартовая позиция (игрок стоит на полу)
         startX = 100;
         startY = 550 - PLAYER_HEIGHT;  // 510
     }

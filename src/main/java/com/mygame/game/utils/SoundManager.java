@@ -16,7 +16,7 @@ public class SoundManager {
     private void loadSounds() {
         try {
             // Загружаем звук удара (игрок получает урон)
-            URL hitUrl = getClass().getResource("/sounds/ддед.mp3");
+            URL hitUrl = getClass().getResource("/sounds/ded.mp3");
             if (hitUrl != null) {
                 Media hitMedia = new Media(hitUrl.toString());
                 hitSound = new MediaPlayer(hitMedia);

@@ -23,6 +23,10 @@ public class FrameAnimation {
         }
     }
 
+    public int getCurrentFrameIndex() {
+        return currentFrame;
+    }
+
     public void update(double deltaTime) {
         if (!playing || frames.isEmpty()) return;
 

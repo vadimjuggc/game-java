@@ -98,9 +98,9 @@ public class Player extends Entity {
         attackLeftFrames.add(loadImage("/images/player/attack/Attack_West.png"));
 
         List<Image> hurtRightFrames = new ArrayList<>();
-        hurtRightFrames.add(loadImage("/images/player/hurt/Hurt_East.png"));
+        hurtRightFrames.add(loadImage("/images/player/hurt/Hurt_West.png"));
         List<Image> hurtLeftFrames = new ArrayList<>();
-        hurtLeftFrames.add(loadImage("/images/player/hurt/Hurt_West.png"));
+        hurtLeftFrames.add(loadImage("/images/player/hurt/Hurt_East.png"));
 
         idleRightAnimation = new FrameAnimation(idleRightFrames, sprite);
         walkRightAnimation = new FrameAnimation(walkRightFrames, sprite);
@@ -209,7 +209,7 @@ public class Player extends Entity {
             weaponOffsetX = movingRight ? 12 : -6;
             weaponOffsetY = 14;
         } else {
-            weaponOffsetX = facingRight ? 12 : -3;  // ← исправлено
+            weaponOffsetX = facingRight ? 12 : -3;
             weaponOffsetY = 13;
         }
 
@@ -244,7 +244,7 @@ public class Player extends Entity {
             } else {
                 if (currentState != State.IDLE) {
                     currentState = State.IDLE;
-                    if (facingRight) {  // ← исправлено
+                    if (facingRight) {
                         currentAnimation = idleRightAnimation;
                         idleRightAnimation.play();
                         walkRightAnimation.stop();
@@ -276,7 +276,6 @@ public class Player extends Entity {
                 attacking = false;
                 currentState = State.IDLE;
 
-                // Используем facingRight для выбора idle после атаки
                 if (facingRight) {
                     currentAnimation = idleRightAnimation;
                     idleRightAnimation.play();
@@ -355,7 +354,7 @@ public class Player extends Entity {
     public void setOnGround(boolean onGround) { this.onGround = onGround; }
 
     public javafx.geometry.Bounds getAttackBounds() {
-        double attackX = movingRight ? x + WIDTH : x - 30;
+        double attackX = facingRight ? x + WIDTH : x - 30;
         double attackY = y;
         double attackWidth = 30;
         double attackHeight = HEIGHT;

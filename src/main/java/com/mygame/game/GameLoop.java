@@ -6,7 +6,7 @@ import javafx.scene.input.KeyCode;
 import java.util.HashSet;
 import java.util.Set;
 
-public class GameLoop extends AnimationTimer{
+public class GameLoop extends AnimationTimer {
     private long lastUpdate = 0;
     private GameWorld gameWorld;
     private Set<KeyCode> keysPressed = new HashSet<>();
@@ -18,9 +18,15 @@ public class GameLoop extends AnimationTimer{
     public void setupKeyHandlers(Scene scene) {
         scene.setOnKeyPressed(event -> {
             keysPressed.add(event.getCode());
+
+            // Отладка по P
             if (event.getCode() == KeyCode.P) {
                 System.out.println("Игрок позиция: " +
                         gameWorld.getPlayer().getX() + ", " + gameWorld.getPlayer().getY());
+            }
+
+            if (event.getCode() == KeyCode.R && gameWorld.isGameOver()) {
+                gameWorld.restart();
             }
         });
 
@@ -28,6 +34,8 @@ public class GameLoop extends AnimationTimer{
             keysPressed.remove(event.getCode());
         });
     }
+
+
 
     @Override
     public void handle(long now) {
