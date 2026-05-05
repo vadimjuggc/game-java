@@ -6,37 +6,54 @@ import java.net.URL;
 
 public class SoundManager {
 
-    private MediaPlayer hitSound;      // звук при получении урона
-    private MediaPlayer attackSound;   // звук при атаке
+    private static SoundManager instance;
 
-    public SoundManager() {
+    private MediaPlayer hitSound;
+    private MediaPlayer attackSound;
+    private MediaPlayer bowShootSound;
+    private MediaPlayer backgroundMusic;
+
+    private SoundManager() {
         loadSounds();
+    }
+
+    public static SoundManager getInstance() {
+        if (instance == null) {
+            instance = new SoundManager();
+        }
+        return instance;
     }
 
     private void loadSounds() {
         try {
-            // Загружаем звук удара (игрок получает урон)
             URL hitUrl = getClass().getResource("/sounds/ded.mp3");
             if (hitUrl != null) {
                 Media hitMedia = new Media(hitUrl.toString());
                 hitSound = new MediaPlayer(hitMedia);
-                System.out.println("Звук удара загружен");
-            } else {
-                System.out.println("Звук удара не найден: /sounds/hit.wav");
             }
 
             URL attackUrl = getClass().getResource("/sounds/arsen-audio.mp3");
             if (attackUrl != null) {
                 Media attackMedia = new Media(attackUrl.toString());
                 attackSound = new MediaPlayer(attackMedia);
-                System.out.println("Звук атаки загружен");
-            } else {
-                System.out.println("Звук атаки не найден: /sounds/attack.wav");
             }
-            // ======================================
 
+            URL bowUrl = getClass().getResource("/sounds/arrow.wav");
+            if (bowUrl != null) {
+                Media bowMedia = new Media(bowUrl.toString());
+                bowShootSound = new MediaPlayer(bowMedia);
+            }
+
+            URL bgUrl = getClass().getResource("/sounds/background.mp3");
+            if (bgUrl != null) {
+                Media bgMedia = new Media(bgUrl.toString());
+                backgroundMusic = new MediaPlayer(bgMedia);
+                backgroundMusic.setCycleCount(MediaPlayer.INDEFINITE);
+                backgroundMusic.setVolume(0.3);
+                backgroundMusic.play();
+            }
         } catch (Exception e) {
-            System.out.println("Ошибка загрузки звука: " + e.getMessage());
+            // игнорируем
         }
     }
 
@@ -48,7 +65,6 @@ public class SoundManager {
         }
     }
 
-    // ========== НОВЫЙ МЕТОД ==========
     public void playAttackSound() {
         if (attackSound != null) {
             attackSound.stop();
@@ -56,5 +72,23 @@ public class SoundManager {
             attackSound.play();
         }
     }
-    // =================================
+
+    public void playBowShootSound() {
+        System.out.println("playBowShootSound вызван, bowShootSound=" + bowShootSound);
+        if (bowShootSound != null) {
+            bowShootSound.setVolume(1.0);  // максимум
+            bowShootSound.stop();
+            bowShootSound.seek(javafx.util.Duration.ZERO);
+            bowShootSound.play();
+            System.out.println("Звук проигран");
+        } else {
+            System.out.println("bowShootSound == NULL, звук не загружен!");
+        }
+    }
+
+    public void stopBackgroundMusic() {
+        if (backgroundMusic != null) {
+            backgroundMusic.stop();
+        }
+    }
 }

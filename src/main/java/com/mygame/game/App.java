@@ -1,31 +1,44 @@
 package com.mygame.game;
 
+import com.mygame.game.ui.MainMenu;
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
-public class App extends  Application{
+public class App extends Application {
+
+    private Stage primaryStage;
+    private GameWorld gameWorld;
+    private GameLoop gameLoop;
+
     @Override
     public void start(Stage stage) {
-        Pane root = new Pane();
+        this.primaryStage = stage;
+
+        // Создаём главное меню
+        MainMenu mainMenu = new MainMenu();
+        Scene menuScene = mainMenu.createMenuScene(stage, this::startGame);
+
+        stage.setTitle("Cinder Soul");
+        stage.setScene(menuScene);
+        stage.show();
+    }
+
+    private void startGame() {
+        javafx.scene.layout.Pane root = new javafx.scene.layout.Pane();
         root.setPrefSize(800, 600);
 
-        GameWorld gameWorld = new GameWorld(root);
+        gameWorld = new GameWorld(root);
+        gameLoop = new GameLoop(gameWorld);
 
-        Scene scene = new Scene(root);
+        Scene gameScene = new Scene(root);
+        gameLoop.setupKeyHandlers(gameScene);
 
-        GameLoop gameLoop = new GameLoop(gameWorld);
-        gameLoop.setupKeyHandlers(scene);
-
-        stage.setTitle("Dead Cells Lite");
-        stage.setScene(scene);
-        stage.show();
-
+        primaryStage.setScene(gameScene);
         gameLoop.start();
     }
 
-    static void main(String[] args) {
+    public static void main(String[] args) {
         launch(args);
     }
 }

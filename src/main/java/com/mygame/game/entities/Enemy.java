@@ -1,6 +1,7 @@
 package com.mygame.game.entities;
 
 import com.mygame.game.utils.FrameAnimation;
+import com.mygame.game.utils.SoundManager;
 import javafx.scene.image.Image;
 import javafx.animation.PauseTransition;
 import javafx.util.Duration;
@@ -15,6 +16,7 @@ public class Enemy extends Entity {
     private static final double HEIGHT = 20;
 
     private Player target;
+    private SoundManager soundManager;
     private double velocityY = 0;
     private boolean onGround = false;
 
@@ -35,6 +37,14 @@ public class Enemy extends Entity {
     private boolean hurt = false;
     private double hurtTimer = 0;
 
+    public boolean isAttacking() {
+        return attacking;
+    }
+
+    public void setSoundManager(SoundManager sm) {
+        this.soundManager = sm;
+    }
+
     public Enemy(double startX, double startY, Player player) {
         super(loadPlaceholderImage(), startX, startY, WIDTH, HEIGHT);
         this.target = player;
@@ -51,18 +61,15 @@ public class Enemy extends Entity {
         idleFrames.add(loadImage("/images/enemies/slime/idle/slime1.png"));
 
         List<Image> walkFrames = new ArrayList<>();
-        for (int i = 2; i <=8; i++)
-        {
+        for (int i = 2; i <=8; i++) {
             walkFrames.add(loadImage("/images/enemies/slime/walk/slime" + i +".png"));
         }
         List <Image> attackFrames = new ArrayList<>();
-        for (int i = 9; i <= 13; i++)
-        {
+        for (int i = 9; i <= 13; i++) {
             attackFrames.add(loadImage("/images/enemies/slime/attack/slime" + i +".png"));
         }
         List <Image> hurtFrames = new ArrayList<>();
-        for (int i = 14; i <= 17; i++)
-        {
+        for (int i = 14; i <= 17; i++) {
             hurtFrames.add(loadImage("/images/enemies/slime/hurt/slime" + i +".png"));
         }
         idleAnimation = new FrameAnimation(idleFrames, sprite);
@@ -87,83 +94,112 @@ public class Enemy extends Entity {
             return null;
         }
     }
+
     private static Image loadPlaceholderImage() {
         return null;
     }
 
     @Override
     public void update(double deltaTime) {
-        // Таймеры для атаки и урона
-        if (!hurt && !attacking) {
-            if (target != null && !target.isDead()) {
-                double dx = target.getX() - x;
-                double dy = Math.abs(target.getY() - y);
-                double distance = Math.abs(dx);
+        // Таймеры
+        if (Math.random() < 0.02) {
+            System.out.println("Enemy: x=" + (int)x + ", y=" + (int)y +
+                    ", attacking=" + attacking +
+                    ", attackCooldown=" + attackCooldown +
+                    ", hurt=" + hurt);
+        }
+        if (attackCooldown > 0) {
+            attackCooldown -= deltaTime;
+        }
+        if (hurtTimer > 0) {
+            hurtTimer -= deltaTime;
+            if (hurtTimer <= 0) {
+                hurt = false;
+            }
+        }
 
-                if (distance < attackRange && attackCooldown <= 0 && !hurt) {
-                    // Начинаем атаку
-                    attacking = true;
-                    damageDealt = false;
-                    currentAnimation = attackAnimation;
-                    attackAnimation.reset();
-                    attackAnimation.play();
-                } else if (distance > 20) {
-                    // Движение к игроку
-                    if (dx > 0) {
-                        x += SPEED * deltaTime;
-                        facingRight = true;
-                    } else {
-                        x -= SPEED * deltaTime;
-                        facingRight = false;
+        // ========== АТАКА ==========
+        if (attacking) {
+            // Во время атаки враг не двигается
+            // Проверяем, пора ли нанести урон
+            if (!damageDealt && attackAnimation.getCurrentFrameIndex() >= attackHitFrame) {
+                damageDealt = true;
+                if (target != null && !target.isDead()) {
+                    target.takeDamage(damage);
+                    // Звук удара по игроку
+                    if (soundManager != null) {
+                        soundManager.playHitSound();
                     }
-                    currentAnimation = walkAnimation;
+                    System.out.println("Враг нанёс урон!");
                 }
             }
-        }
 
-// Наносим урон в середине анимации
-        if (attacking && !damageDealt && attackAnimation.getCurrentFrameIndex() >= attackHitFrame) {
-            damageDealt = true;
-            if (target != null) {
-                target.takeDamage(damage);
+            // Проверяем, закончилась ли анимация атаки
+            if (attackAnimation.isFinished()) {
+                attacking = false;
+                attackCooldown = 1.2; // перезарядка после атаки
+                currentAnimation = idleAnimation;
+                idleAnimation.play();
+                System.out.println("Атака завершена, перезарядка: " + attackCooldown);
             }
         }
 
-// Проверка окончания атаки
-        if (attacking && attackAnimation.isFinished()) {
-            attacking = false;
-            attackCooldown = 1.0;
-            currentAnimation = idleAnimation;
-            idleAnimation.play();
+        // ========== ДВИЖЕНИЕ (только если не атакует и не получает урон) ==========
+        if (!attacking && !hurt && target != null && !target.isDead()) {
+            double dx = target.getX() - x;
+            double distance = Math.abs(dx);
+
+            // Проверяем, нужно ли атаковать
+            double dy = Math.abs(target.getY() - y);
+            if (distance < attackRange && dy < HEIGHT + 10 && attackCooldown <= 0) {
+                attacking = true;
+                damageDealt = false;
+                currentAnimation = attackAnimation;
+                attackAnimation.reset();
+                attackAnimation.play();
+                System.out.println("Враг начинает атаку! dy=" + dy);
+            }
+            else if (distance > 15) {
+                if (dx > 0) {
+                    x += SPEED * deltaTime;
+                    facingRight = true;
+                } else {
+                    x -= SPEED * deltaTime;
+                    facingRight = false;
+                }
+                currentAnimation = walkAnimation;
+            }
         }
 
+        // ========== ОТРАЖЕНИЕ СПРАЙТА ==========
         if (facingRight) {
-            sprite.setScaleX(1);
-        } else {
             sprite.setScaleX(-1);
+        } else {
+            sprite.setScaleX(1);
         }
 
-        // Вертикальное движение
+        // ========== ГРАВИТАЦИЯ ==========
         velocityY += GRAVITY * deltaTime;
         y += velocityY * deltaTime;
-
         setPosition(x, y);
 
-        // Проверка окончания атаки
-        if (attacking && attackAnimation.isFinished()) {
-            attacking = false;
-            currentAnimation = idleAnimation;
-            idleAnimation.play();
+        // Не падать ниже пола
+        if (y + HEIGHT > 600) {
+            y = 600 - HEIGHT;
+            velocityY = 0;
+            setPosition(x, y);
         }
 
-        // Проверка окончания урона
+        // ========== АНИМАЦИЯ УРОНА (HURT) ==========
         if (hurt && hurtAnimation.isFinished()) {
             hurt = false;
-            currentAnimation = idleAnimation;
-            idleAnimation.play();
+            if (!attacking) {
+                currentAnimation = idleAnimation;
+                idleAnimation.play();
+            }
         }
 
-        // Обновляем анимацию
+        // ========== ОБНОВЛЕНИЕ ТЕКУЩЕЙ АНИМАЦИИ ==========
         if (currentAnimation != null) {
             currentAnimation.update(deltaTime);
         }
@@ -184,13 +220,14 @@ public class Enemy extends Entity {
         health -= damage;
         if (health < 0) health = 0;
 
-        // Анимация получения урона
         hurt = true;
         hurtTimer = 0.5;
-        attacking = false;
-        currentAnimation = hurtAnimation;
-        hurtAnimation.reset();
-        hurtAnimation.play();
+
+        if (!attacking) {
+            currentAnimation = hurtAnimation;
+            hurtAnimation.reset();
+            hurtAnimation.play();
+        }
 
         sprite.setOpacity(0.5);
         PauseTransition pause = new PauseTransition(Duration.millis(100));

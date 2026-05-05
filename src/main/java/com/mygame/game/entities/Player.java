@@ -9,6 +9,8 @@ import javafx.util.Duration;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.List;
+import com.mygame.game.utils.SoundManager;
+
 
 public class Player extends Entity {
 
@@ -26,6 +28,8 @@ public class Player extends Entity {
     private boolean attacking = false;
     private int attackCooldown = 0;
     private int attackDamage = 25;
+    private List<Arrow> arrows = new ArrayList<>();
+
 
     // Анимации игрока
     private FrameAnimation idleRightAnimation;
@@ -37,10 +41,13 @@ public class Player extends Entity {
     private FrameAnimation walkLeftAnimation;
     private FrameAnimation attackLeftAnimation;
     private FrameAnimation hurtLeftAnimation;
-
     private FrameAnimation currentAnimation;
 
     // Оружие
+    private final double SHOOT_DELAY = 0.6;
+    private int arrowsLeft = 10; // начальное количество стрел
+    private int maxArrows = 10;
+    private double shootCooldown = 0;
     private ImageView weaponSprite;
     private FrameAnimation bowIdleAnimation;
     private FrameAnimation bowShootAnimation;
@@ -49,6 +56,30 @@ public class Player extends Entity {
     private boolean facingRight = true;
     private enum State { IDLE, WALKING, ATTACKING, HURT }
     private State currentState = State.IDLE;
+    public List<Arrow> getArrows() { return arrows; }
+    public void removeArrow(Arrow arrow) { arrows.remove(arrow); }
+    public int getArrowsLeft() { return arrowsLeft; }
+    public void addArrows(int amount) {
+        arrowsLeft = Math.min(arrowsLeft + amount, maxArrows);
+    }
+
+    public void shootArrow() {
+        if (arrowsLeft <= 0) {
+            System.out.println("Нет стрел! arrowsLeft=" + arrowsLeft);
+            return;
+        }
+
+        System.out.println("shootArrow вызван, вызываем звук");
+        SoundManager.getInstance().playBowShootSound();
+        System.out.println("Звук вызван");
+
+        double directionX = facingRight ? 1 : -1;
+        double directionY = 0;
+        Arrow arrow = new Arrow(x + (facingRight ? WIDTH : -10), y + HEIGHT/2, directionX, directionY);
+        arrows.add(arrow);
+        arrowsLeft--;
+        System.out.println("Стрела создана, осталось стрел: " + arrowsLeft);
+    }
 
     public Player(double startX, double startY) {
         super(loadPlaceholderImage(), startX, startY, WIDTH, HEIGHT);
@@ -73,7 +104,6 @@ public class Player extends Entity {
     }
 
     private void loadAnimations() {
-        // ===== IDLE =====
         List<Image> idleRightFrames = new ArrayList<>();
         for (int i = 0; i <= 3; i++) {
             idleRightFrames.add(loadImage("/images/player/idle/Idle_East_" + i + ".png"));
@@ -165,7 +195,15 @@ public class Player extends Entity {
             velocityY = JUMP_FORCE;
             onGround = false;
         }
-
+        if (keysPressed.contains(KeyCode.Q) && !attacking && shootCooldown <= 0) {
+            shootArrow();
+            shootCooldown = SHOOT_DELAY;
+            if (isBowEquipped) {
+                currentWeaponAnimation = bowShootAnimation;
+                bowShootAnimation.reset();
+                bowShootAnimation.play();
+            }
+        }
         if (keysPressed.contains(KeyCode.E) && attackCooldown <= 0 && !attacking) {
             attacking = true;
             attackCooldown = 20;
@@ -180,17 +218,14 @@ public class Player extends Entity {
                 attackLeftAnimation.reset();
                 attackLeftAnimation.play();
             }
-
-            if (isBowEquipped) {
-                currentWeaponAnimation = bowShootAnimation;
-                bowShootAnimation.reset();
-                bowShootAnimation.play();
-            }
         }
     }
 
     @Override
     public void update(double deltaTime) {
+        if (shootCooldown > 0) {
+            shootCooldown -= deltaTime;
+        }
         if (movingRight && !movingLeft) {
             facingRight = true;
         } else if (movingLeft && !movingRight) {
@@ -301,11 +336,12 @@ public class Player extends Entity {
     }
 
     public void takeDamage(int damage) {
+        System.out.println("takeDamage вызван");
         health -= damage;
         if (health < 0) health = 0;
 
         currentState = State.HURT;
-        if (movingRight || (!movingLeft && !movingRight && currentAnimation == walkRightAnimation)) {
+        if (facingRight) {
             currentAnimation = hurtRightAnimation;
             hurtRightAnimation.reset();
             hurtRightAnimation.play();
@@ -323,7 +359,7 @@ public class Player extends Entity {
             weaponSprite.setOpacity(1.0);
             if (!attacking) {
                 currentState = State.IDLE;
-                if (movingRight || (!movingLeft && !movingRight)) {
+                if (facingRight) {
                     currentAnimation = idleRightAnimation;
                     idleRightAnimation.play();
                 } else {
