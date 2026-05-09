@@ -1,5 +1,6 @@
 package com.mygame.game.entities;
 
+import com.mygame.game.GameWorld;
 import com.mygame.game.utils.FrameAnimation;
 import com.mygame.game.utils.SoundManager;
 import javafx.scene.image.Image;
@@ -17,6 +18,7 @@ public class Enemy extends Entity {
 
     private Player target;
     private SoundManager soundManager;
+    private GameWorld gameWorld;
     private double velocityY = 0;
     private boolean onGround = false;
 
@@ -45,9 +47,10 @@ public class Enemy extends Entity {
         this.soundManager = sm;
     }
 
-    public Enemy(double startX, double startY, Player player) {
+    public Enemy(double startX, double startY, Player player, GameWorld gameWorld) {
         super(loadPlaceholderImage(), startX, startY, WIDTH, HEIGHT);
         this.target = player;
+        this.gameWorld = gameWorld;
         this.health = 40;
 
         loadAnimations();
@@ -101,13 +104,6 @@ public class Enemy extends Entity {
 
     @Override
     public void update(double deltaTime) {
-        // Таймеры
-        if (Math.random() < 0.02) {
-            System.out.println("Enemy: x=" + (int)x + ", y=" + (int)y +
-                    ", attacking=" + attacking +
-                    ", attackCooldown=" + attackCooldown +
-                    ", hurt=" + hurt);
-        }
         if (attackCooldown > 0) {
             attackCooldown -= deltaTime;
         }
@@ -118,15 +114,11 @@ public class Enemy extends Entity {
             }
         }
 
-        // ========== АТАКА ==========
         if (attacking) {
-            // Во время атаки враг не двигается
-            // Проверяем, пора ли нанести урон
             if (!damageDealt && attackAnimation.getCurrentFrameIndex() >= attackHitFrame) {
                 damageDealt = true;
                 if (target != null && !target.isDead()) {
                     target.takeDamage(damage);
-                    // Звук удара по игроку
                     if (soundManager != null) {
                         soundManager.playHitSound();
                     }
@@ -134,23 +126,20 @@ public class Enemy extends Entity {
                 }
             }
 
-            // Проверяем, закончилась ли анимация атаки
             if (attackAnimation.isFinished()) {
                 attacking = false;
-                attackCooldown = 1.2; // перезарядка после атаки
+                attackCooldown = 1.2;
                 currentAnimation = idleAnimation;
                 idleAnimation.play();
                 System.out.println("Атака завершена, перезарядка: " + attackCooldown);
             }
         }
 
-        // ========== ДВИЖЕНИЕ (только если не атакует и не получает урон) ==========
         if (!attacking && !hurt && target != null && !target.isDead()) {
             double dx = target.getX() - x;
             double distance = Math.abs(dx);
-
-            // Проверяем, нужно ли атаковать
             double dy = Math.abs(target.getY() - y);
+
             if (distance < attackRange && dy < HEIGHT + 10 && attackCooldown <= 0) {
                 attacking = true;
                 damageDealt = false;
@@ -171,26 +160,22 @@ public class Enemy extends Entity {
             }
         }
 
-        // ========== ОТРАЖЕНИЕ СПРАЙТА ==========
         if (facingRight) {
             sprite.setScaleX(-1);
         } else {
             sprite.setScaleX(1);
         }
 
-        // ========== ГРАВИТАЦИЯ ==========
         velocityY += GRAVITY * deltaTime;
         y += velocityY * deltaTime;
         setPosition(x, y);
 
-        // Не падать ниже пола
         if (y + HEIGHT > 600) {
             y = 600 - HEIGHT;
             velocityY = 0;
             setPosition(x, y);
         }
 
-        // ========== АНИМАЦИЯ УРОНА (HURT) ==========
         if (hurt && hurtAnimation.isFinished()) {
             hurt = false;
             if (!attacking) {
@@ -199,7 +184,6 @@ public class Enemy extends Entity {
             }
         }
 
-        // ========== ОБНОВЛЕНИЕ ТЕКУЩЕЙ АНИМАЦИИ ==========
         if (currentAnimation != null) {
             currentAnimation.update(deltaTime);
         }
@@ -219,6 +203,10 @@ public class Enemy extends Entity {
     public void takeDamage(int damage) {
         health -= damage;
         if (health < 0) health = 0;
+
+        if (gameWorld != null) {
+            gameWorld.showDamageNumber(damage, x, y - 20, false);
+        }
 
         hurt = true;
         hurtTimer = 0.5;

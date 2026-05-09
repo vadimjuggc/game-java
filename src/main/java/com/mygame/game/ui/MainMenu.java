@@ -118,7 +118,13 @@ public class MainMenu {
 
     public void playMenuMusic() {
         try {
-            URL musicUrl = getClass().getResource("/sounds/mainmenu-bg.mp3");
+            if (menuMusic != null) {
+                menuMusic.stop();
+                menuMusic.dispose();
+                menuMusic = null;
+            }
+
+            URL musicUrl = getClass().getResource("/sounds/sprinkles.mp3");
             if (musicUrl != null) {
                 Media media = new Media(musicUrl.toString());
                 menuMusic = new MediaPlayer(media);
@@ -127,7 +133,7 @@ public class MainMenu {
                 menuMusic.play();
             }
         } catch (Exception e) {
-            System.err.println("Ошибка воспроизведения музыки: " + e.getMessage());
+            System.out.println("Ошибка воспроизведения музыки: " + e.getMessage());
         }
     }
 

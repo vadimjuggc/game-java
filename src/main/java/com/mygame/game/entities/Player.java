@@ -10,6 +10,8 @@ import java.util.Set;
 import java.util.ArrayList;
 import java.util.List;
 import com.mygame.game.utils.SoundManager;
+import com.mygame.game.GameWorld;
+
 
 public class Player extends Entity {
 
@@ -59,6 +61,8 @@ public class Player extends Entity {
     private enum State { IDLE, WALKING, ATTACKING, HURT }
     private State currentState = State.IDLE;
 
+    private GameWorld gameWorld;
+
     public List<Arrow> getArrows() { return arrows; }
     public void removeArrow(Arrow arrow) { arrows.remove(arrow); }
     public int getArrowsLeft() { return arrowsLeft; }
@@ -86,8 +90,9 @@ public class Player extends Entity {
         arrowsLeft--;
     }
 
-    public Player(double startX, double startY) {
+    public Player(double startX, double startY, GameWorld gameWorld) {
         super(loadPlaceholderImage(), startX, startY, WIDTH, HEIGHT);
+        this.gameWorld = gameWorld;
 
         weaponSprite = new ImageView();
         weaponSprite.setFitWidth(14);
@@ -427,6 +432,10 @@ public class Player extends Entity {
     public void takeDamage(int damage) {
         health -= damage;
         if (health < 0) health = 0;
+
+        if (gameWorld != null) {
+            gameWorld.showDamageNumber(damage, x, y - 20, true);
+        }
 
         currentState = State.HURT;
         if (facingRight) {

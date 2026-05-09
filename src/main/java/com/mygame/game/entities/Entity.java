@@ -3,7 +3,6 @@ package com.mygame.game.entities;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.geometry.Bounds;
-import java.net.URL;
 
 public abstract class Entity {
 
@@ -45,12 +44,11 @@ public abstract class Entity {
         return sprite.getBoundsInParent();
     }
 
-    protected static Image loadImage(String path, double width, double height) {
-        URL url = Entity.class.getResource(path);
-        if (url == null) {
-            System.out.println("Не найден файл: " + path);
-            return null;
-        }
-        return new Image(url.toString());
+    public void landOnPlatform(double platformY) {
+        y = platformY - height;
+        setPosition(x, y);
+    }
+
+    public void stopVerticalMovement() {
     }
 }

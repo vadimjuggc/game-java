@@ -28,13 +28,13 @@ public class SoundManager {
 
     private void loadSounds() {
         try {
-            URL hitUrl = getClass().getResource("/sounds/ded.mp3");
+            URL hitUrl = getClass().getResource("/sounds/character/hurt/hurt_sound.mp3");
             if (hitUrl != null) {
                 Media hitMedia = new Media(hitUrl.toString());
                 hitSound = new MediaPlayer(hitMedia);
             }
 
-            URL attackUrl = getClass().getResource("/sounds/arsen-audio.mp3");
+            URL attackUrl = getClass().getResource("/sounds/slime/slime_hit_sound.mp3");
             if (attackUrl != null) {
                 Media attackMedia = new Media(attackUrl.toString());
                 attackSound = new MediaPlayer(attackMedia);
@@ -107,6 +107,13 @@ public class SoundManager {
             bowShootSound.stop();
             bowShootSound.seek(javafx.util.Duration.ZERO);
             bowShootSound.play();
+        }
+    }
+
+    public void restartBackgroundMusic() {
+        if (backgroundMusic != null) {
+            backgroundMusic.stop();
+            backgroundMusic.play();
         }
     }
 

@@ -12,12 +12,13 @@ public class App extends Application {
     private GameWorld gameWorld;
     private GameLoop gameLoop;
     private Scene mainMenuScene;
+    private MainMenu mainMenu;
 
     @Override
     public void start(Stage stage) {
         this.primaryStage = stage;
 
-        MainMenu mainMenu = new MainMenu();
+        mainMenu = new MainMenu();
         mainMenuScene = mainMenu.createMenuScene(stage, this::startGame);
 
         stage.setTitle("Cinder Soul");
@@ -26,11 +27,23 @@ public class App extends Application {
     }
 
     private void startGame() {
+        if (mainMenu != null) {
+            mainMenu.stopMenuMusic();
+        }
+
         Pane root = new Pane();
         root.setPrefSize(800, 600);
 
         gameWorld = new GameWorld(root, () -> {
-            gameLoop.stop();
+            if (gameLoop != null) {
+                gameLoop.stop();
+            }
+            com.mygame.game.utils.SoundManager.getInstance().stopBackgroundMusic();
+            gameWorld = null;
+            gameLoop = null;
+            if (mainMenu != null) {
+                mainMenu.playMenuMusic();
+            }
             primaryStage.setScene(mainMenuScene);
         });
 

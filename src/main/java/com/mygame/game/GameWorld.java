@@ -19,6 +19,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import com.mygame.game.entities.Arrow;
+import com.mygame.game.entities.DamageNumber;
 import javafx.scene.control.Button;
 
 public class GameWorld {
@@ -51,12 +52,16 @@ public class GameWorld {
         level = new Level();
         level.addToPane(root);
 
-        this.player = new Player(level.getStartX(), level.getStartY());
+        this.player = new Player(level.getStartX(), level.getStartY(), this);
         root.getChildren().add(player.getSprite());
         root.getChildren().add(player.getWeaponSprite());
         this.gameUI = new GameUI(root);
 
         spawnEnemy();
+    }
+
+    public void showDamageNumber(int damage, double x, double y, boolean isPlayer) {
+        new DamageNumber(root, damage, x, y, isPlayer);
     }
 
     public void update(double deltaTime) {
@@ -137,10 +142,17 @@ public class GameWorld {
         gameOver = false;
         spawnTimer = 0;
 
+        Image bgImage = new Image(getClass().getResourceAsStream("/images/ui/battle/snowmountians.png"));
+        background = new ImageView(bgImage);
+        background.setFitWidth(800);
+        background.setFitHeight(600);
+        background.setPreserveRatio(false);
+        root.getChildren().add(background);
+
         level = new Level();
         level.addToPane(root);
 
-        player = new Player(level.getStartX(), level.getStartY());
+        player = new Player(level.getStartX(), level.getStartY(), this);
         root.getChildren().add(player.getSprite());
         root.getChildren().add(player.getWeaponSprite());
 
@@ -257,11 +269,11 @@ public class GameWorld {
         menuButton.setFont(Font.font("Arial", FontWeight.BOLD, 20));
         menuButton.setOnAction(e -> {
             paused = false;
-            // Возврат в главное меню
-            javafx.application.Platform.runLater(() -> {
-                root.getScene().setRoot(new javafx.scene.layout.StackPane());
-                // Нужно передать Stage, но проще через callback
-            });
+            hidePauseMenu();
+            SoundManager.getInstance().stopBackgroundMusic();
+            if (onMainMenuCallback != null) {
+                onMainMenuCallback.run();
+            }
         });
 
         pauseMenu.getChildren().addAll(pauseLabel, resumeButton, menuButton);
@@ -291,7 +303,7 @@ public class GameWorld {
                 if (!player.isBowEquipped()) {
                     SoundManager.getInstance().playSwordHitSound();
                 } else {
-                    SoundManager.getInstance().playAttackSound(); // для лука
+                    SoundManager.getInstance().playAttackSound();
                 }
             }
 
@@ -316,7 +328,7 @@ public class GameWorld {
         double x = platformList[index][0];
         double y = platformList[index][1];
 
-        Enemy enemy = new Enemy(x, y, player);
+        Enemy enemy = new Enemy(x, y, player, this);
         enemy.setSoundManager(SoundManager.getInstance());
         enemies.add(enemy);
         root.getChildren().add(enemy.getSprite());
