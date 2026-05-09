@@ -13,6 +13,9 @@ import javafx.geometry.Pos;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import java.net.URL;
+import javafx.animation.ScaleTransition;
+import javafx.util.Duration;
+import javafx.scene.Node;
 
 public class MainMenu {
 
@@ -21,7 +24,6 @@ public class MainMenu {
     public Scene createMenuScene(Stage stage, Runnable startGameCallback) {
         StackPane root = new StackPane();
 
-        // 1. Фоновое изображение
         Image backgroundImage = new Image(getClass().getResourceAsStream("/images/ui/background_mountian.gif"));
         if (backgroundImage != null) {
             ImageView background = new ImageView(backgroundImage);
@@ -33,7 +35,6 @@ public class MainMenu {
             root.setStyle("-fx-background-color: linear-gradient(to bottom, #1a1a2e, #16213e);");
         }
 
-        // 2. Логотип игры
         Image logoImage = new Image(getClass().getResourceAsStream("/images/ui/mainMenu/CinderSoul.png"));
         ImageView logoView = null;
         if (logoImage != null) {
@@ -43,7 +44,6 @@ public class MainMenu {
             logoView.setPreserveRatio(true);
         }
 
-        // 3. Кнопка Play
         Image playImage = new Image(getClass().getResourceAsStream("/images/ui/mainMenu/play_button.png"));
         ImageView playImageView = new ImageView(playImage);
         playImageView.setFitWidth(170);
@@ -57,9 +57,13 @@ public class MainMenu {
 
         playButton.setOnMouseEntered(e -> {
             playButton.setStyle("-fx-effect: dropshadow(gaussian, gray, 20, 0.8, 0, 0); -fx-background-color: transparent;");
+            playButton.setScaleX(1.1);
+            playButton.setScaleY(1.1);
         });
         playButton.setOnMouseExited(e -> {
             playButton.setStyle("-fx-effect: null; -fx-background-color: transparent;");
+            playButton.setScaleX(1.0);
+            playButton.setScaleY(1.0);
         });
 
         playButton.setOnAction(e -> {
@@ -80,31 +84,31 @@ public class MainMenu {
 
         exitButton.setOnMouseEntered(e -> {
             exitButton.setStyle("-fx-effect: dropshadow(gaussian, red, 15, 0.7, 0, 0); -fx-background-color: transparent;");
+            exitButton.setScaleX(1.1);
+            exitButton.setScaleY(1.1);
         });
         exitButton.setOnMouseExited(e -> {
             exitButton.setStyle("-fx-effect: null; -fx-background-color: transparent;");
+            exitButton.setScaleX(1.0);
+            exitButton.setScaleY(1.1);
         });
 
         exitButton.setOnAction(e -> System.exit(0));
 
-        // 5. Контейнер для кнопки выхода
         HBox exitContainer = new HBox();
         exitContainer.setAlignment(Pos.BOTTOM_LEFT);
         exitContainer.setPadding(new Insets(20));
         exitContainer.getChildren().add(exitButton);
-        // ВАЖНО: позволяем кликам проходить сквозь пустую область контейнера
         exitContainer.setPickOnBounds(false);
 
-        // 6. Контейнер для логотипа и кнопки Play
         VBox centerBox = new VBox(30);
         centerBox.setAlignment(Pos.CENTER);
         if (logoView != null) {
             centerBox.getChildren().add(logoView);
         }
         centerBox.getChildren().add(playButton);
-        centerBox.setPickOnBounds(false); // Тоже отключаем захват пустых областей
+        centerBox.setPickOnBounds(false);
 
-        // 7. Сборка сцены
         root.getChildren().addAll(centerBox, exitContainer);
 
         playMenuMusic();
@@ -112,7 +116,7 @@ public class MainMenu {
         return new Scene(root, 800, 600);
     }
 
-    private void playMenuMusic() {
+    public void playMenuMusic() {
         try {
             URL musicUrl = getClass().getResource("/sounds/mainmenu-bg.mp3");
             if (musicUrl != null) {

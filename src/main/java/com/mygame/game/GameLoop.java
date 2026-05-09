@@ -19,7 +19,6 @@ public class GameLoop extends AnimationTimer {
         scene.setOnKeyPressed(event -> {
             keysPressed.add(event.getCode());
 
-            // Отладка по P
             if (event.getCode() == KeyCode.P) {
                 System.out.println("Игрок позиция: " +
                         gameWorld.getPlayer().getX() + ", " + gameWorld.getPlayer().getY());
@@ -28,14 +27,17 @@ public class GameLoop extends AnimationTimer {
             if (event.getCode() == KeyCode.R && gameWorld.isGameOver()) {
                 gameWorld.restart();
             }
+
+            // Пауза по Esc
+            if (event.getCode() == KeyCode.ESCAPE) {
+                gameWorld.togglePause();
+            }
         });
 
         scene.setOnKeyReleased(event -> {
             keysPressed.remove(event.getCode());
         });
     }
-
-
 
     @Override
     public void handle(long now) {
@@ -47,10 +49,10 @@ public class GameLoop extends AnimationTimer {
         double deltaTime = (now - lastUpdate) / 1_000_000_000.0;
         lastUpdate = now;
 
-        // Передаем нажатые клавиши игроку
         gameWorld.getPlayer().handleInput(keysPressed);
 
-        // Обновляем мир
-        gameWorld.update(deltaTime);
+        if (!gameWorld.isPaused()) {
+            gameWorld.update(deltaTime);
+        }
     }
 }

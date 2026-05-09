@@ -12,6 +12,8 @@ public class SoundManager {
     private MediaPlayer attackSound;
     private MediaPlayer bowShootSound;
     private MediaPlayer backgroundMusic;
+    private MediaPlayer swordSwingSound;
+    private MediaPlayer swordHitSound;
 
     private SoundManager() {
         loadSounds();
@@ -52,8 +54,18 @@ public class SoundManager {
                 backgroundMusic.setVolume(0.3);
                 backgroundMusic.play();
             }
+            URL swordSwingUrl = getClass().getResource("/sounds/weapons/sword/sword-sound.mp3");
+            if (swordSwingUrl != null) {
+                Media swingMedia = new Media(swordSwingUrl.toString());
+                swordSwingSound = new MediaPlayer(swingMedia);
+            }
+
+            URL swordHitUrl = getClass().getResource("/sounds/weapons/sword/violent-sword-sound.mp3");
+            if (swordHitUrl != null) {
+                Media hitMedia = new Media(swordHitUrl.toString());
+                swordHitSound = new MediaPlayer(hitMedia);
+            }
         } catch (Exception e) {
-            // игнорируем
         }
     }
 
@@ -73,16 +85,28 @@ public class SoundManager {
         }
     }
 
+
+    public void playSwordSwingSound() {
+        if (swordSwingSound != null) {
+            swordSwingSound.stop();
+            swordSwingSound.seek(javafx.util.Duration.ZERO);
+            swordSwingSound.play();
+        }
+    }
+
+    public void playSwordHitSound() {
+        if (swordHitSound != null) {
+            swordHitSound.stop();
+            swordHitSound.seek(javafx.util.Duration.ZERO);
+            swordHitSound.play();
+        }
+    }
     public void playBowShootSound() {
-        System.out.println("playBowShootSound вызван, bowShootSound=" + bowShootSound);
         if (bowShootSound != null) {
-            bowShootSound.setVolume(1.0);  // максимум
+            bowShootSound.setVolume(1.0);
             bowShootSound.stop();
             bowShootSound.seek(javafx.util.Duration.ZERO);
             bowShootSound.play();
-            System.out.println("Звук проигран");
-        } else {
-            System.out.println("bowShootSound == NULL, звук не загружен!");
         }
     }
 

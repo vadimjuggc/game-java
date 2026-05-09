@@ -12,12 +12,14 @@ import java.util.List;
 import java.util.Iterator;
 import java.util.Random;
 import javafx.scene.control.Label;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.paint.Color;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import com.mygame.game.entities.Arrow;
+import javafx.scene.control.Button;
 
 public class GameWorld {
 
@@ -30,20 +32,24 @@ public class GameWorld {
     private ImageView background;
     private double spawnTimer = 0;
     private boolean gameOver = false;
+    private Runnable onMainMenuCallback;
+    private boolean paused = false;
+    private VBox pauseMenu;
 
-    public GameWorld(Pane root) {
-         Image bgImage = new Image(getClass().getResourceAsStream("/images/ui/battle/snowmountians.png"));
-            background = new ImageView(bgImage);
-            background.setFitWidth(800);
-            background.setFitHeight(600);
-            background.setPreserveRatio(false);
-            root.getChildren().add(background);
+    public GameWorld(Pane root, Runnable onMainMenuCallback) {
         this.root = root;
+        this.onMainMenuCallback = onMainMenuCallback;
         this.enemies = new ArrayList<>();
+
+        Image bgImage = new Image(getClass().getResourceAsStream("/images/ui/battle/snowmountians.png"));
+        background = new ImageView(bgImage);
+        background.setFitWidth(800);
+        background.setFitHeight(600);
+        background.setPreserveRatio(false);
+        root.getChildren().add(background);
 
         level = new Level();
         level.addToPane(root);
-
 
         this.player = new Player(level.getStartX(), level.getStartY());
         root.getChildren().add(player.getSprite());
@@ -59,6 +65,9 @@ public class GameWorld {
         double oldY = player.getY();
         player.update(deltaTime);
         checkPlatformCollisions(player, oldY);
+
+        gameUI.updateWeapon(player.isBowEquipped());
+
         Iterator<Enemy> enemyIterator = enemies.iterator();
         while (enemyIterator.hasNext()) {
             Enemy enemy = enemyIterator.next();
@@ -220,6 +229,56 @@ public class GameWorld {
         }
     }
 
+    public void togglePause() {
+        paused = !paused;
+        if (paused) {
+            showPauseMenu();
+        } else {
+            hidePauseMenu();
+        }
+    }
+
+    private void showPauseMenu() {
+        pauseMenu = new VBox(20);
+        pauseMenu.setAlignment(javafx.geometry.Pos.CENTER);
+        pauseMenu.setStyle("-fx-background-color: rgba(0,0,0,0.7); -fx-padding: 30;");
+        pauseMenu.setLayoutX(800/2 - 100);
+        pauseMenu.setLayoutY(600/2 - 100);
+
+        Label pauseLabel = new Label("PAUSED");
+        pauseLabel.setFont(Font.font("Arial", FontWeight.BOLD, 36));
+        pauseLabel.setTextFill(Color.WHITE);
+
+        Button resumeButton = new Button("Resume");
+        resumeButton.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+        resumeButton.setOnAction(e -> togglePause());
+
+        Button menuButton = new Button("Main Menu");
+        menuButton.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+        menuButton.setOnAction(e -> {
+            paused = false;
+            // Возврат в главное меню
+            javafx.application.Platform.runLater(() -> {
+                root.getScene().setRoot(new javafx.scene.layout.StackPane());
+                // Нужно передать Stage, но проще через callback
+            });
+        });
+
+        pauseMenu.getChildren().addAll(pauseLabel, resumeButton, menuButton);
+        root.getChildren().add(pauseMenu);
+    }
+
+    private void hidePauseMenu() {
+        if (pauseMenu != null) {
+            root.getChildren().remove(pauseMenu);
+            pauseMenu = null;
+        }
+    }
+
+    public boolean isPaused() {
+        return paused;
+    }
+
     private void checkCombatCollisions() {
         Iterator<Enemy> iterator = enemies.iterator();
 
@@ -229,7 +288,11 @@ public class GameWorld {
             if (player.isAttacking() &&
                     player.getAttackBounds().intersects(enemy.getSprite().getBoundsInParent())) {
                 enemy.takeDamage(player.getAttackDamage());
-                SoundManager.getInstance().playAttackSound();
+                if (!player.isBowEquipped()) {
+                    SoundManager.getInstance().playSwordHitSound();
+                } else {
+                    SoundManager.getInstance().playAttackSound(); // для лука
+                }
             }
 
             if (player.getSprite().getBoundsInParent().intersects(enemy.getSprite().getBoundsInParent())) {
