@@ -1,5 +1,6 @@
 package com.mygame.game.ui;
 
+import com.mygame.game.utils.SoundManager;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -13,9 +14,6 @@ import javafx.geometry.Pos;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import java.net.URL;
-import javafx.animation.ScaleTransition;
-import javafx.util.Duration;
-import javafx.scene.Node;
 
 public class MainMenu {
 
@@ -24,7 +22,7 @@ public class MainMenu {
     public Scene createMenuScene(Stage stage, Runnable startGameCallback) {
         StackPane root = new StackPane();
 
-        Image backgroundImage = new Image(getClass().getResourceAsStream("/images/ui/background_mountian.gif"));
+        Image backgroundImage = new Image(getClass().getResourceAsStream("/images/ui/mainMenu/mainmenu_bg.png"));
         if (backgroundImage != null) {
             ImageView background = new ImageView(backgroundImage);
             background.setFitWidth(800);
@@ -57,16 +55,13 @@ public class MainMenu {
 
         playButton.setOnMouseEntered(e -> {
             playButton.setStyle("-fx-effect: dropshadow(gaussian, gray, 20, 0.8, 0, 0); -fx-background-color: transparent;");
-            playButton.setScaleX(1.1);
-            playButton.setScaleY(1.1);
         });
         playButton.setOnMouseExited(e -> {
             playButton.setStyle("-fx-effect: null; -fx-background-color: transparent;");
-            playButton.setScaleX(1.0);
-            playButton.setScaleY(1.0);
         });
 
         playButton.setOnAction(e -> {
+            SoundManager.getInstance().playClickSound();
             stopMenuMusic();
             startGameCallback.run();
         });
@@ -84,17 +79,15 @@ public class MainMenu {
 
         exitButton.setOnMouseEntered(e -> {
             exitButton.setStyle("-fx-effect: dropshadow(gaussian, red, 15, 0.7, 0, 0); -fx-background-color: transparent;");
-            exitButton.setScaleX(1.1);
-            exitButton.setScaleY(1.1);
         });
         exitButton.setOnMouseExited(e -> {
             exitButton.setStyle("-fx-effect: null; -fx-background-color: transparent;");
-            exitButton.setScaleX(1.0);
-            exitButton.setScaleY(1.1);
         });
 
-        exitButton.setOnAction(e -> System.exit(0));
-
+        exitButton.setOnAction(e -> {
+            SoundManager.getInstance().playClickSound();
+            System.exit(0);
+        });
         HBox exitContainer = new HBox();
         exitContainer.setAlignment(Pos.BOTTOM_LEFT);
         exitContainer.setPadding(new Insets(20));
@@ -118,12 +111,6 @@ public class MainMenu {
 
     public void playMenuMusic() {
         try {
-            if (menuMusic != null) {
-                menuMusic.stop();
-                menuMusic.dispose();
-                menuMusic = null;
-            }
-
             URL musicUrl = getClass().getResource("/sounds/sprinkles.mp3");
             if (musicUrl != null) {
                 Media media = new Media(musicUrl.toString());
@@ -133,7 +120,6 @@ public class MainMenu {
                 menuMusic.play();
             }
         } catch (Exception e) {
-            System.out.println("Ошибка воспроизведения музыки: " + e.getMessage());
         }
     }
 

@@ -10,6 +10,8 @@ import com.mygame.game.ui.GameUI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Iterator;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import java.util.Random;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
@@ -25,6 +27,7 @@ import javafx.scene.control.Button;
 public class GameWorld {
 
     private Pane root;
+    private Pane pauseOverlay;
     private Player player;
     private List<Enemy> enemies;
     private Level level;
@@ -66,6 +69,7 @@ public class GameWorld {
 
     public void update(double deltaTime) {
         if (gameOver) return;
+        if (paused) return;
 
         double oldY = player.getY();
         player.update(deltaTime);
@@ -241,33 +245,53 @@ public class GameWorld {
         }
     }
 
-    public void togglePause() {
-        paused = !paused;
-        if (paused) {
-            showPauseMenu();
-        } else {
-            hidePauseMenu();
-        }
-    }
-
     private void showPauseMenu() {
-        pauseMenu = new VBox(20);
-        pauseMenu.setAlignment(javafx.geometry.Pos.CENTER);
-        pauseMenu.setStyle("-fx-background-color: rgba(0,0,0,0.7); -fx-padding: 30;");
-        pauseMenu.setLayoutX(800/2 - 100);
-        pauseMenu.setLayoutY(600/2 - 100);
+        pauseOverlay = new Pane();
+        pauseOverlay.setPrefSize(800, 600);
+        pauseOverlay.setLayoutX(0);
+        pauseOverlay.setLayoutY(0);
 
-        Label pauseLabel = new Label("PAUSED");
-        pauseLabel.setFont(Font.font("Arial", FontWeight.BOLD, 36));
-        pauseLabel.setTextFill(Color.WHITE);
+        Image bgImage = new Image(getClass().getResourceAsStream("/images/ui/pause/pause_bg.png"));
+        if (bgImage != null) {
+            ImageView bgView = new ImageView(bgImage);
+            bgView.setFitWidth(800);
+            bgView.setFitHeight(600);
+            bgView.setPreserveRatio(false);
+            pauseOverlay.getChildren().add(bgView);
+        } else {
+            pauseOverlay.setStyle("-fx-background-color: rgba(0,0,0,0.7);");
+        }
 
-        Button resumeButton = new Button("Resume");
-        resumeButton.setFont(Font.font("Arial", FontWeight.BOLD, 20));
-        resumeButton.setOnAction(e -> togglePause());
+        ImageView pausedImage = new ImageView(new Image(getClass().getResourceAsStream("/images/ui/pause/pause.png")));
+        pausedImage.setPreserveRatio(true);
+        pausedImage.setFitWidth(315);
+        pausedImage.setFitHeight(150);
+        pausedImage.setLayoutX(800/2 - 315/2);
+        pausedImage.setLayoutY(600/2 - 100);
 
-        Button menuButton = new Button("Main Menu");
-        menuButton.setFont(Font.font("Arial", FontWeight.BOLD, 20));
-        menuButton.setOnAction(e -> {
+        ImageView resumeButton = new ImageView(new Image(getClass().getResourceAsStream("/images/ui/pause/resume.png")));
+        resumeButton.setFitWidth(178);
+        resumeButton.setFitHeight(80);
+        resumeButton.setLayoutX(800/2 - 178/2);
+        resumeButton.setLayoutY(600/2 + 30);
+        resumeButton.setCursor(javafx.scene.Cursor.HAND);
+        resumeButton.setOnMouseEntered(e -> resumeButton.setStyle("-fx-effect: dropshadow(gaussian, white, 15, 0.7, 0, 0);"));
+        resumeButton.setOnMouseExited(e -> resumeButton.setStyle("-fx-effect: null;"));
+        resumeButton.setOnMouseClicked(e -> {
+            SoundManager.getInstance().playClickSound();
+            togglePause();
+        });
+
+        ImageView menuButton = new ImageView(new Image(getClass().getResourceAsStream("/images/ui/pause/main_menu_button.png")));
+        menuButton.setFitWidth(218);
+        menuButton.setFitHeight(80);
+        menuButton.setLayoutX(800/2 - 218/2);
+        menuButton.setLayoutY(600/2 + 120);
+        menuButton.setCursor(javafx.scene.Cursor.HAND);
+        menuButton.setOnMouseEntered(e -> menuButton.setStyle("-fx-effect: dropshadow(gaussian, white, 15, 0.7, 0, 0);"));
+        menuButton.setOnMouseExited(e -> menuButton.setStyle("-fx-effect: null;"));
+        menuButton.setOnMouseClicked(e -> {
+            SoundManager.getInstance().playClickSound();
             paused = false;
             hidePauseMenu();
             SoundManager.getInstance().stopBackgroundMusic();
@@ -276,14 +300,23 @@ public class GameWorld {
             }
         });
 
-        pauseMenu.getChildren().addAll(pauseLabel, resumeButton, menuButton);
-        root.getChildren().add(pauseMenu);
+        pauseOverlay.getChildren().addAll(pausedImage, resumeButton, menuButton);
+        root.getChildren().add(pauseOverlay);
     }
 
     private void hidePauseMenu() {
-        if (pauseMenu != null) {
-            root.getChildren().remove(pauseMenu);
-            pauseMenu = null;
+        if (pauseOverlay != null) {
+            root.getChildren().remove(pauseOverlay);
+            pauseOverlay = null;
+        }
+    }
+
+    public void togglePause() {
+        paused = !paused;
+        if (paused) {
+            showPauseMenu();
+        } else {
+            hidePauseMenu();
         }
     }
 

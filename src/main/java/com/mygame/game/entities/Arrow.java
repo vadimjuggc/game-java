@@ -26,7 +26,6 @@ public class Arrow {
             sprite.setX(x);
             sprite.setY(y);
 
-            // Поворачиваем стрелу в направлении полёта
             double angle = Math.atan2(directionY, directionX);
             sprite.setRotate(Math.toDegrees(angle));
         }
@@ -37,7 +36,6 @@ public class Arrow {
             sprite.setX(x);
             sprite.setY(y);
 
-            // Удаляем, если вылетела за пределы экрана
             if (x < -50 || x > 850 || y < -50 || y > 650) {
                 active = false;
             }

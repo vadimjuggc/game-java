@@ -18,21 +18,17 @@ public class Level {
     private void createLevel() {
         platforms = new ArrayList<>();
 
-        // Пол
+        // пол
         platforms.add(new Platform(0, 550, 800, 50));
+        // низкие
+        platforms.add(new Platform(100, 550 - 80, 120, 20));
+        platforms.add(new Platform(580, 550 - 80, 120, 20));
 
-        // Платформы относительно пола
-        // Формула: y = 550 - (высота_над_полом)
+        // средние (на 150 пкс выше пола)
+        platforms.add(new Platform(340, 550 - 150, 120, 20));
 
-        // Низкие платформы (на 100 пикселей выше пола)
-        platforms.add(new Platform(100, 550 - 80, 120, 20));   // y = 450
-        platforms.add(new Platform(580, 550 - 80, 120, 20));   // y = 450
-
-        // Средние платформы (на 150 пикселей выше пола)
-        platforms.add(new Platform(340, 550 - 150, 120, 20));   // y = 400
-
-        // Высокие платформы (на 200 пикселей выше пола)
-        platforms.add(new Platform(450, 550 - 200, 100, 20));   // y = 350
+        // высокие (на 200 пкс выше пола)
+        platforms.add(new Platform(450, 550 - 200, 100, 20));
 
         startX = 100;
         startY = 550 - PLAYER_HEIGHT;  // 510

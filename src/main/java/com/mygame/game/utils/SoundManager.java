@@ -7,7 +7,7 @@ import java.net.URL;
 public class SoundManager {
 
     private static SoundManager instance;
-
+    private MediaPlayer clickSound;
     private MediaPlayer hitSound;
     private MediaPlayer attackSound;
     private MediaPlayer bowShootSound;
@@ -32,6 +32,12 @@ public class SoundManager {
             if (hitUrl != null) {
                 Media hitMedia = new Media(hitUrl.toString());
                 hitSound = new MediaPlayer(hitMedia);
+            }
+
+            URL clickUrl = getClass().getResource("/sounds/ui_sounds/click.mp3");
+            if (clickUrl != null) {
+                Media clickMedia = new Media(clickUrl.toString());
+                clickSound = new MediaPlayer(clickMedia);
             }
 
             URL attackUrl = getClass().getResource("/sounds/slime/slime_hit_sound.mp3");
@@ -74,6 +80,14 @@ public class SoundManager {
             hitSound.stop();
             hitSound.seek(javafx.util.Duration.ZERO);
             hitSound.play();
+        }
+    }
+
+    public void playClickSound() {
+        if (clickSound != null) {
+            clickSound.stop();
+            clickSound.seek(javafx.util.Duration.ZERO);
+            clickSound.play();
         }
     }
 

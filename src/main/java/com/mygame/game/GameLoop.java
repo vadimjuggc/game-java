@@ -28,7 +28,6 @@ public class GameLoop extends AnimationTimer {
                 gameWorld.restart();
             }
 
-            // Пауза по Esc
             if (event.getCode() == KeyCode.ESCAPE) {
                 gameWorld.togglePause();
             }
