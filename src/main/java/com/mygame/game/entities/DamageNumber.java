@@ -13,19 +13,22 @@ public class DamageNumber {
     private Label label;
 
     public DamageNumber(Pane root, int damage, double x, double y, boolean isPlayer) {
-        label = new Label("-" + damage);
-        label.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-
-        if (isPlayer) {
-            label.setTextFill(Color.RED);
+        if (damage < 0) {
+            label = new Label("+" + Math.abs(damage));
+            label.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+            label.setTextFill(Color.LIMEGREEN);
         } else {
-            label.setTextFill(Color.WHITE);
+            label = new Label("-" + damage);
+            label.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+            if (isPlayer) {
+                label.setTextFill(Color.RED);
+            } else {
+                label.setTextFill(Color.WHITE);
+            }
         }
 
-        label.setStyle("-fx-font-weight: bold;");
         label.setLayoutX(x);
         label.setLayoutY(y);
-
         root.getChildren().add(label);
 
         TranslateTransition moveUp = new TranslateTransition(Duration.seconds(0.8), label);

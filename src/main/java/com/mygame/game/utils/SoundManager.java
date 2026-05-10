@@ -15,6 +15,7 @@ public class SoundManager {
     private MediaPlayer swordSwingSound;
     private MediaPlayer swordHitSound;
     private MediaPlayer healSound;
+    private MediaPlayer slimeAttackSound;
 
     private SoundManager() {
         loadSounds();
@@ -41,13 +42,19 @@ public class SoundManager {
                 clickSound = new MediaPlayer(clickMedia);
             }
 
+            URL slimeAttackUrl = getClass().getResource("/sounds/slime/slime_attack_sound.mp3");
+            if (slimeAttackUrl != null) {
+                Media slimeAttackMedia = new Media(slimeAttackUrl.toString());
+                slimeAttackSound = new MediaPlayer(slimeAttackMedia);
+            }
+
             URL attackUrl = getClass().getResource("/sounds/slime/slime_hit_sound.mp3");
             if (attackUrl != null) {
                 Media attackMedia = new Media(attackUrl.toString());
                 attackSound = new MediaPlayer(attackMedia);
             }
 
-            URL healUrl = getClass().getResource("/sounds/heal.mp3");
+            URL healUrl = getClass().getResource("/sounds/character/heal/heal_sound.mp3");
             if (healUrl != null) {
                 Media healMedia = new Media(healUrl.toString());
                 healSound = new MediaPlayer(healMedia);
@@ -95,6 +102,14 @@ public class SoundManager {
             healSound.stop();
             healSound.seek(javafx.util.Duration.ZERO);
             healSound.play();
+        }
+    }
+
+    public void playSlimeAttackSound() {
+        if (slimeAttackSound != null) {
+            slimeAttackSound.stop();
+            slimeAttackSound.seek(javafx.util.Duration.ZERO);
+            slimeAttackSound.play();
         }
     }
 

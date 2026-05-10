@@ -1,5 +1,6 @@
 package com.mygame.game.entities;
 
+import com.mygame.game.utils.SoundManager;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
@@ -12,18 +13,12 @@ public class Item {
     private ImageView sprite;
     private boolean collected = false;
 
-    private static final double SIZE = 20;
-
     public Item(ItemType type, double x, double y) {
         this.type = type;
         this.x = x;
         this.y = y;
 
-        Image img = loadImage();
-        sprite = new ImageView(img);
-        sprite.setFitWidth(SIZE);
-        sprite.setFitHeight(SIZE);
-        sprite.setPreserveRatio(false);
+        sprite = new ImageView(loadImage());
         sprite.setX(x);
         sprite.setY(y);
     }
@@ -36,14 +31,13 @@ public class Item {
         }
     }
 
-    public void update(double deltaTime) {
-    }
+    public void update(double deltaTime) {}
 
     public boolean checkPickup(Player player) {
         if (collected) return false;
         double px = player.getX(), py = player.getY();
         double pw = player.getWidth(), ph = player.getHeight();
-        boolean hit = px < x + SIZE && px + pw > x && py < y + SIZE && py + ph > y;
+        boolean hit = px < x + 16 && px + pw > x && py < y + 16 && py + ph > y;
         if (hit) {
             collected = true;
             sprite.setVisible(false);
@@ -53,7 +47,8 @@ public class Item {
 
     public void applyEffect(Player player) {
         if (type == ItemType.HEALTH) {
-            player.heal(20);
+            player.heal(10);
+            SoundManager.getInstance().playHealSound();
         }
     }
 

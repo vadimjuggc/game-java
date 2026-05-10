@@ -1,69 +1,132 @@
 package com.mygame.game.ui;
 
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
 public class GameUI {
 
-    private Label healthLabel;
     private Label scoreLabel;
     private Label arrowsLabel;
     private Label weaponLabel;
+    private Label healthValueLabel;
+    private Rectangle healthBar;
+    private Rectangle healthBarBg;
     private int score = 0;
+    private Rectangle arrowBar;
+    private static final int MAX_ARROWS = 10;
+
+    private static final int MAX_HEALTH = 100;
+    private static final double BAR_WIDTH = 120;
+    private static final double BAR_HEIGHT = 18;
 
     private Pane root;
 
     public GameUI(Pane root) {
         this.root = root;
 
-        healthLabel = new Label("❤ Здоровье: 100");
-        healthLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-        healthLabel.setTextFill(Color.WHITE);
-        healthLabel.setStyle("-fx-background-color: rgba(0,0,0,0.5); -fx-padding: 5 10 5 10;");
-        healthLabel.setLayoutX(10);
-        healthLabel.setLayoutY(10);
+        ImageView heartLabel = new ImageView(new javafx.scene.image.Image(getClass().getResourceAsStream("/images/ui/battle_icons/heart_icon.png")));
+        heartLabel.setFitWidth(32);
+        heartLabel.setFitHeight(32);
+        heartLabel.setLayoutX(8);
+        heartLabel.setLayoutY(8);
 
-        scoreLabel = new Label("⭐ Очки: 0");
-        scoreLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-        scoreLabel.setTextFill(Color.WHITE);
-        scoreLabel.setStyle("-fx-background-color: rgba(0,0,0,0.5); -fx-padding: 5 10 5 10;");
-        scoreLabel.setLayoutX(10);
-        scoreLabel.setLayoutY(50);
+        healthBarBg = new Rectangle(BAR_WIDTH, BAR_HEIGHT);
+        healthBarBg.setFill(Color.rgb(60, 0, 0, 0.8));
+        healthBarBg.setArcWidth(8);
+        healthBarBg.setArcHeight(8);
+        healthBarBg.setLayoutX(38);
+        healthBarBg.setLayoutY(13);
 
-        arrowsLabel = new Label("🏹 Стрелы: 10");
-        arrowsLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        healthBar = new Rectangle(BAR_WIDTH, BAR_HEIGHT);
+        healthBar.setFill(Color.LIMEGREEN);
+        healthBar.setArcWidth(8);
+        healthBar.setArcHeight(8);
+        healthBar.setLayoutX(38);
+        healthBar.setLayoutY(13);
+
+        healthValueLabel = new Label("100");
+        healthValueLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        healthValueLabel.setTextFill(Color.WHITE);
+        healthValueLabel.setLayoutX(38 + BAR_WIDTH / 2 - 12);
+        healthValueLabel.setLayoutY(13);
+
+        ImageView scoreIcon = new ImageView(new Image(getClass().getResourceAsStream("/images/ui/battle_icons/score_icon.png")));
+        scoreIcon.setFitHeight(40);
+        scoreIcon.setPreserveRatio(true);
+        scoreIcon.setLayoutX(8);
+        scoreIcon.setLayoutY(48);
+
+        scoreLabel = new Label("0");
+        scoreLabel.setFont(Font.font("Palatino Linotype", FontWeight.BOLD, 20));
+        scoreLabel.setTextFill(Color.color(0.85, 0.75, 0.4));
+        scoreLabel.setStyle("-fx-effect: dropshadow(gaussian, #000000, 4, 0.8, 0, 0);");
+        scoreLabel.setLayoutX(75);
+        scoreLabel.setLayoutY(53);
+
+        ImageView arrowIcon = new ImageView(new Image(getClass().getResourceAsStream("/images/ui/battle_icons/arrow_icon.png")));
+        arrowIcon.setFitWidth(32);
+        arrowIcon.setFitHeight(32);
+        arrowIcon.setLayoutX(8);
+        arrowIcon.setLayoutY(88);
+
+        Rectangle arrowBarBg = new Rectangle(BAR_WIDTH, BAR_HEIGHT);
+        arrowBarBg.setFill(Color.rgb(0, 0, 60, 0.8));
+        arrowBarBg.setArcWidth(8);
+        arrowBarBg.setArcHeight(8);
+        arrowBarBg.setLayoutX(38);
+        arrowBarBg.setLayoutY(93);
+
+        arrowBar = new Rectangle(BAR_WIDTH, BAR_HEIGHT);
+        arrowBar.setFill(Color.CORNFLOWERBLUE);
+        arrowBar.setArcWidth(8);
+        arrowBar.setArcHeight(8);
+        arrowBar.setLayoutX(38);
+        arrowBar.setLayoutY(93);
+
+        arrowsLabel = new Label("10");
+        arrowsLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         arrowsLabel.setTextFill(Color.WHITE);
-        arrowsLabel.setStyle("-fx-background-color: rgba(0,0,0,0.5); -fx-padding: 5 10 5 10;");
-        arrowsLabel.setLayoutX(10);
-        arrowsLabel.setLayoutY(90);
+        arrowsLabel.setLayoutX(38 + BAR_WIDTH / 2 - 8);
+        arrowsLabel.setLayoutY(93);
 
         weaponLabel = new Label("⚔️ Меч");
         weaponLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         weaponLabel.setTextFill(Color.WHITE);
         weaponLabel.setStyle("-fx-background-color: rgba(0,0,0,0.5); -fx-padding: 2 5 2 5;");
         weaponLabel.setLayoutX(10);
-        weaponLabel.setLayoutY(130);
+        weaponLabel.setLayoutY(125);
 
-        root.getChildren().addAll(healthLabel, scoreLabel, arrowsLabel, weaponLabel);
+        root.getChildren().addAll(
+                heartLabel, healthBarBg, healthBar, healthValueLabel,
+                arrowIcon, arrowBarBg, arrowBar, arrowsLabel,
+                scoreIcon, scoreLabel,
+                weaponLabel
+        );
     }
 
     public void updateHealth(int health) {
-        healthLabel.setText("❤ Здоровье: " + health);
+        double ratio = Math.max(0, (double) health / MAX_HEALTH);
+        healthBar.setWidth(BAR_WIDTH * ratio);
+        healthValueLabel.setText(String.valueOf(health));
+
         if (health < 30) {
-            healthLabel.setTextFill(Color.RED);
+            healthBar.setFill(Color.RED);
         } else if (health < 60) {
-            healthLabel.setTextFill(Color.ORANGE);
+            healthBar.setFill(Color.ORANGE);
         } else {
-            healthLabel.setTextFill(Color.WHITE);
+            healthBar.setFill(Color.LIMEGREEN);
         }
     }
 
     public void addScore(int points) {
         score += points;
-        scoreLabel.setText("⭐ Очки: " + score);
+        scoreLabel.setText(String.valueOf(score));
     }
 
     public void updateWeapon(boolean isBow) {
@@ -75,11 +138,16 @@ public class GameUI {
     }
 
     public void updateArrows(int arrowsLeft) {
-        arrowsLabel.setText("🏹 Стрелы: " + arrowsLeft);
+        double ratio = Math.max(0, (double) arrowsLeft / MAX_ARROWS);
+        arrowBar.setWidth(BAR_WIDTH * ratio);
+        arrowsLabel.setText(String.valueOf(arrowsLeft));
+
         if (arrowsLeft == 0) {
-            arrowsLabel.setTextFill(Color.RED);
+            arrowBar.setFill(Color.RED);
+        } else if (arrowsLeft <= 3) {
+            arrowBar.setFill(Color.ORANGE);
         } else {
-            arrowsLabel.setTextFill(Color.WHITE);
+            arrowBar.setFill(Color.CORNFLOWERBLUE);
         }
     }
 

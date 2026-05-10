@@ -134,7 +134,7 @@ public class GameWorld {
                     return;
                 }
 
-                if (random.nextDouble() < 0.30) {
+                if (random.nextDouble() < 0.15) {
                     spawnItem(enemy.getX(), enemy.getY());
                 }
 
@@ -180,6 +180,7 @@ public class GameWorld {
             Item item = itemIterator.next();
             if (item.checkPickup(player)) {
                 item.applyEffect(player);
+                showDamageNumber(-10, player.getX(), player.getY() - 20, false);
                 itemIterator.remove();
                 gamePane.getChildren().remove(item.getSprite());
             }

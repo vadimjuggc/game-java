@@ -132,6 +132,7 @@ public class Enemy extends Entity {
                     target.takeDamage(damage);
                     if (soundManager != null) {
                         soundManager.playHitSound();
+                        soundManager.playSlimeAttackSound();
                     }
                 }
             }
