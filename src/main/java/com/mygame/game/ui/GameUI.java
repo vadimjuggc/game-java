@@ -97,11 +97,11 @@ public class GameUI {
         scoreIcon.setLayoutY(88);
 
         scoreLabel = new Label("0");
-        scoreLabel.setFont(Font.font("Palatino Linotype", FontWeight.BOLD, 26));
+        scoreLabel.setFont(Font.font("Palatino Linotype", FontWeight.BOLD, 18));
         scoreLabel.setTextFill(Color.color(0.7, 0.6, 0.3));
         scoreLabel.setStyle("-fx-effect: dropshadow(gaussian, #000000, 4, 0.8, 0, 0);");
         scoreLabel.setLayoutX(75);
-        scoreLabel.setLayoutY(95);
+        scoreLabel.setLayoutY(98);
 
         comboLabel = new Label("");
         comboLabel.setFont(Font.font("Palatino Linotype", FontWeight.BOLD, 28));

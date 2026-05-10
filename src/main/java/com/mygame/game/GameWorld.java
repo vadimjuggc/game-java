@@ -33,6 +33,7 @@ public class GameWorld {
     private Player player;
     private List<Enemy> enemies;
     private List<Item> items;
+    private List<Ghost> ghosts;
     private Level level;
     private Set<KeyCode> keysPressed = new HashSet<>();
     private GameUI gameUI;
@@ -56,6 +57,7 @@ public class GameWorld {
     private List<BloodParticle> bloodParticles = new ArrayList<>();
     private List<DarkParticle> darkParticles = new ArrayList<>();
     private double idleParticleTimer = 0;
+    private List<LandingParticle> landingParticles = new ArrayList<>();
 
     private Rectangle swordBarBg;
     private Rectangle swordBar;
@@ -69,6 +71,7 @@ public class GameWorld {
         this.onMainMenuCallback = onMainMenuCallback;
         this.enemies = new ArrayList<>();
         this.items = new ArrayList<>();
+        this.ghosts = new ArrayList<>();
 
         root.setPrefSize(VIEW_W, VIEW_H);
         root.setClip(new javafx.scene.shape.Rectangle(VIEW_W, VIEW_H));
@@ -125,6 +128,9 @@ public class GameWorld {
         for (int i = 0; i < 5; i++) {
             spawnEnemy();
         }
+        for (int i = 0; i < 2; i++) {
+            spawnGhost();
+        }
     }
 
     public void showDamageNumber(int damage, double x, double y, boolean isPlayer) {
@@ -147,6 +153,21 @@ public class GameWorld {
                 player.getX() + player.getWidth() / 2,
                 player.getY() + player.getHeight()
         ));
+    }
+
+    private void spawnGhost() {
+        double[][] ghostSpawns = {
+                {340, 360}, {450, 310}, {850, 430}, {1050, 360},
+                {1350, 310}, {1650, 420}, {1820, 340}, {2100, 300}
+        };
+        int index = random.nextInt(ghostSpawns.length);
+        double x = ghostSpawns[index][0];
+        double y = ghostSpawns[index][1];
+
+        Ghost ghost = new Ghost(x, y, player, this);
+        ghost.setSoundManager(SoundManager.getInstance());
+        ghosts.add(ghost);
+        gamePane.getChildren().add(ghost.getSprite());
     }
 
     public void setKeysPressed(Set<KeyCode> keys) {
@@ -183,6 +204,12 @@ public class GameWorld {
         double oldY = player.getY();
         player.update(deltaTime);
         checkPlatformCollisions(player, oldY);
+        if (player.consumeLanded()) {
+            spawnLanding(
+                    player.getX() + player.getWidth() / 2,
+                    player.getY() + player.getHeight()
+            );
+        }
 
         double targetCamX = player.getX() + player.getWidth() / 2 - VIEW_W / 2;
         targetCamX = Math.max(0, Math.min(targetCamX, Level.WORLD_WIDTH - VIEW_W));
@@ -204,6 +231,17 @@ public class GameWorld {
 
         gamePane.setTranslateX(-cameraX);
         gamePane.setTranslateY(0);
+
+        for (Platform platform : level.getPlatforms()) {
+            if (platform.isVanishing()) {
+                boolean playerOnTop =
+                        player.getY() + player.getHeight() >= platform.getY() - 5 &&
+                                player.getY() + player.getHeight() <= platform.getY() + 8 &&
+                                player.getX() + player.getWidth() > platform.getX() &&
+                                player.getX() < platform.getX() + platform.getWidth();
+                platform.update(deltaTime, playerOnTop);
+            }
+        }
 
         Iterator<Enemy> enemyIterator = enemies.iterator();
         while (enemyIterator.hasNext()) {
@@ -244,6 +282,37 @@ public class GameWorld {
             checkPlatformCollisions(enemy, oldEnemyY);
         }
 
+        Iterator<Ghost> ghostIterator = ghosts.iterator();
+        while (ghostIterator.hasNext()) {
+            Ghost ghost = ghostIterator.next();
+
+            if (ghost.isDead()) {
+                comboCount++;
+                comboTimer = 0;
+                comboMultiplier = Math.min(comboCount, 5);
+                int points = 15 * comboMultiplier;
+                spawnBlood(ghost.getX() + ghost.getWidth() / 2, ghost.getY() + ghost.getHeight() / 2);
+                startShake(0.1, 3);
+                gameUI.addScore(points);
+                gameUI.showCombo(comboCount, comboMultiplier);
+                SoundManager.getInstance().playComboSound(comboCount);
+
+                if (gameUI.getScore() >= WIN_SCORE) {
+                    gameWon = true;
+                    ghostIterator.remove();
+                    gamePane.getChildren().remove(ghost.getSprite());
+                    showWinScreen();
+                    return;
+                }
+
+                ghostIterator.remove();
+                gamePane.getChildren().remove(ghost.getSprite());
+                continue;
+            }
+
+            ghost.update(deltaTime);
+        }
+
         darkParticles.removeIf(p -> !p.update(deltaTime));
         if (player.isMoving()) {
             footstepTimer += deltaTime;
@@ -256,6 +325,7 @@ public class GameWorld {
         }
         bloodParticles.removeIf(p -> !p.update(deltaTime));
         slashEffects.removeIf(s -> !s.update(deltaTime));
+        landingParticles.removeIf(p -> !p.update(deltaTime));
 
         if (player.isIdle() && player.isOnGround()) {
             idleParticleTimer += deltaTime;
@@ -414,6 +484,7 @@ public class GameWorld {
         cameraX = 0;
         enemies.clear();
         items.clear();
+        ghosts.clear();
 
         root.setClip(new javafx.scene.shape.Rectangle(VIEW_W, VIEW_H));
 
@@ -470,6 +541,9 @@ public class GameWorld {
         for (int i = 0; i < 5; i++) {
             spawnEnemy();
         }
+        for (int i = 0; i < 2; i++) {
+            spawnGhost();
+        }
     }
 
     public boolean isGameOver() {
@@ -486,8 +560,11 @@ public class GameWorld {
         );
     }
 
-    public void onWeaponSwitch(boolean isBow) {
-        gameUI.showWeaponPopup(isBow);
+    private void spawnLanding(double x, double y) {
+        int count = 7;
+        for (int i = 0; i < count; i++) {
+            landingParticles.add(new LandingParticle(gamePane, x, y, i, count));
+        }
     }
 
     private void showGameOverScreen() {
@@ -522,6 +599,7 @@ public class GameWorld {
         boolean onPlatform = false;
 
         for (Platform platform : level.getPlatforms()) {
+            if (!platform.isSolid()) continue;
             double entityBottom = entity.getY() + entity.getHeight();
             double entityTop = entity.getY();
             double entityLeft = entity.getX();
@@ -678,6 +756,22 @@ public class GameWorld {
                 }
             }
         }
+
+        for (Ghost ghost : ghosts) {
+            if (player.canDealDamage() && !player.isBowEquipped() &&
+                    player.getAttackBounds().intersects(ghost.getSprite().getBoundsInParent())) {
+                ghost.takeMeleeDamage(player.getAttackDamage());
+                SoundManager.getInstance().playSwordHitSound();
+            }
+
+            if (player.getSprite().getBoundsInParent().intersects(ghost.getSprite().getBoundsInParent())) {
+                // contact damage handled inside ghost via attackCooldown
+            }
+        }
+    }
+
+    public void onWeaponSwitch(boolean isBow) {
+        gameUI.showWeaponPopup(isBow);
     }
 
     private void spawnEnemy() {

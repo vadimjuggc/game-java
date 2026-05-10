@@ -24,21 +24,21 @@ public class Level {
         platforms.add(new Platform(0, 550, 800, 50));
         platforms.add(new Platform(100, 470, 120, 20));
         platforms.add(new Platform(580, 470, 120, 20));
-        platforms.add(new Platform(340, 400, 120, 20));
-        platforms.add(new Platform(450, 350, 100, 20));
+        platforms.add(new Platform(340, 400, 120, 20, true));
+        platforms.add(new Platform(450, 350, 100, 20, true));
 
         platforms.add(new Platform(800, 550, 800, 50));
         platforms.add(new Platform(850, 470, 130, 20));
-        platforms.add(new Platform(1050, 400, 120, 20));
+        platforms.add(new Platform(1050, 400, 120, 20, true));
         platforms.add(new Platform(1200, 460, 100, 20));
-        platforms.add(new Platform(1350, 350, 140, 20));
+        platforms.add(new Platform(1350, 350, 140, 20, true));
         platforms.add(new Platform(1500, 470, 110, 20));
 
         platforms.add(new Platform(1600, 550, 800, 50));
         platforms.add(new Platform(1650, 460, 120, 20));
-        platforms.add(new Platform(1820, 380, 130, 20));
+        platforms.add(new Platform(1820, 380, 130, 20, true));
         platforms.add(new Platform(1980, 460, 100, 20));
-        platforms.add(new Platform(2100, 340, 150, 20));
+        platforms.add(new Platform(2100, 340, 150, 20, true));
         platforms.add(new Platform(2250, 470, 110, 20));
 
         startX = 100;

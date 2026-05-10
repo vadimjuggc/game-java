@@ -21,6 +21,8 @@ public class Player extends Entity {
     private static final double GRAVITY = 800;
     private static final double WIDTH = 24;
     private static final double HEIGHT = 32;
+    private double lastVelocityY = 0;
+    private boolean justLanded = false;
 
     private boolean movingLeft, movingRight;
     private boolean onGround = false;
@@ -421,6 +423,8 @@ public class Player extends Entity {
         if (x < 0) x = 0;
         if (x > Level.WORLD_WIDTH - WIDTH) x = Level.WORLD_WIDTH - WIDTH;
 
+        lastVelocityY = velocityY;
+
         setPosition(x, y);
 
         if (currentAnimation != null) {
@@ -471,6 +475,9 @@ public class Player extends Entity {
     }
 
     public void landOnPlatform(double platformY) {
+        if (!onGround && lastVelocityY > 150) {
+            justLanded = true;
+        }
         y = platformY - HEIGHT;
         velocityY = 0;
         onGround = true;
@@ -495,6 +502,14 @@ public class Player extends Entity {
 
     public boolean isMoving() {
         return (movingLeft || movingRight) && onGround;
+    }
+
+    public boolean consumeLanded() {
+        if (justLanded) {
+            justLanded = false;
+            return true;
+        }
+        return false;
     }
 
     public double getAttackCooldownRatio() {
