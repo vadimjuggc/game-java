@@ -20,7 +20,6 @@ public class DashTrail {
         ghost.setY(y);
         ghost.setOpacity(0.5);
 
-        // Тёмно-фиолетовый оттенок
         ghost.setStyle("-fx-blend-mode: multiply;");
         javafx.scene.effect.ColorAdjust ca = new javafx.scene.effect.ColorAdjust();
         ca.setHue(-0.7);

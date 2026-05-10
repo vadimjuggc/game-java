@@ -133,7 +133,6 @@ public class GameUI {
         weaponPopupLabel.setLayoutY(120);
         weaponPopupLabel.setOpacity(0);
 
-        // Таймер — правый верхний угол
         timerLabel = new Label("⏱ 0:00");
         timerLabel.setFont(Font.font("Palatino Linotype", FontWeight.BOLD, 20));
         timerLabel.setTextFill(Color.rgb(210, 200, 170));
@@ -146,7 +145,6 @@ public class GameUI {
         timerLabel.setLayoutX(800 - 120);
         timerLabel.setLayoutY(10);
 
-// Счётчик килов — под таймером
         killsLabel = new Label("☠ 0");
         killsLabel.setFont(Font.font("Palatino Linotype", FontWeight.BOLD, 20));
         killsLabel.setTextFill(Color.rgb(200, 80, 80));
@@ -287,7 +285,6 @@ public class GameUI {
     public void addKill() {
         kills++;
         killsLabel.setText("☠ " + kills);
-        // Вспышка при новом киле
         killsLabel.setTextFill(Color.rgb(255, 120, 120));
         javafx.animation.PauseTransition flash = new javafx.animation.PauseTransition(javafx.util.Duration.millis(300));
         flash.setOnFinished(e -> killsLabel.setTextFill(Color.rgb(200, 80, 80)));

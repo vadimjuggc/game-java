@@ -35,6 +35,7 @@ public class GameWorld {
     private List<Enemy> enemies;
     private List<Item> items;
     private List<Ghost> ghosts;
+    private List<SkeletonEnemy> skeletons;
     private Level level;
     private Set<KeyCode> keysPressed = new HashSet<>();
     private GameUI gameUI;
@@ -79,6 +80,7 @@ public class GameWorld {
         this.enemies = new ArrayList<>();
         this.items = new ArrayList<>();
         this.ghosts = new ArrayList<>();
+        this.skeletons = new ArrayList<>();
 
         root.setPrefSize(VIEW_W, VIEW_H);
         root.setClip(new javafx.scene.shape.Rectangle(VIEW_W, VIEW_H));
@@ -152,6 +154,9 @@ public class GameWorld {
         for (int i = 0; i < 2; i++) {
             spawnGhost();
         }
+        for (int i = 0; i < 2; i++) {
+            spawnSkeleton();
+        }
     }
 
     public void showDamageNumber(int damage, double x, double y, boolean isPlayer) {
@@ -189,6 +194,25 @@ public class GameWorld {
         ghost.setSoundManager(SoundManager.getInstance());
         ghosts.add(ghost);
         gamePane.getChildren().add(ghost.getSprite());
+    }
+
+    private void spawnSkeleton() {
+        double[][] skeletonSpawns = {
+                {100, 434},
+                {580, 434},
+                {850, 434},
+                {1200, 434},
+                {1500, 434},
+                {1650, 434},
+                {1980, 434},
+                {2250, 434}
+        };
+        int index = random.nextInt(skeletonSpawns.length);
+        double x = skeletonSpawns[index][0];
+        double y = skeletonSpawns[index][1];
+
+        SkeletonEnemy skeleton = new SkeletonEnemy(gamePane, x, y, player, this);
+        skeletons.add(skeleton);
     }
 
     public void spawnDashTrail(double x, double y, double w, double h) {
@@ -342,6 +366,29 @@ public class GameWorld {
             ghost.update(deltaTime);
         }
 
+        Iterator<SkeletonEnemy> skeletonIterator = skeletons.iterator();
+        while (skeletonIterator.hasNext()) {
+            SkeletonEnemy skeleton = skeletonIterator.next();
+
+            if (skeleton.isDead()) {
+                comboCount++;
+                comboTimer = 0;
+                comboMultiplier = Math.min(comboCount, 5);
+                int points = 20 * comboMultiplier;
+                spawnBlood(skeleton.getX() + skeleton.getWidth() / 2, skeleton.getY() + skeleton.getHeight() / 2);
+                startShake(0.1, 3);
+                gameUI.addScore(points);
+                gameUI.addKill();
+                gameUI.showCombo(comboCount, comboMultiplier);
+                SoundManager.getInstance().playComboSound(comboCount);
+                skeleton.removeFromPane();
+                skeletonIterator.remove();
+                continue;
+            }
+
+            skeleton.update(deltaTime);
+        }
+
         darkParticles.removeIf(p -> !p.update(deltaTime));
         if (player.isMoving()) {
             footstepTimer += deltaTime;
@@ -388,6 +435,18 @@ public class GameWorld {
                     break;
                 }
             }
+            if (!hit) {
+                for (SkeletonEnemy skeleton : skeletons) {
+                    if (arrow.getBounds().intersects(skeleton.getSprite().getBoundsInParent())) {
+                        skeleton.takeDamage(arrow.getDamage());
+                        SoundManager.getInstance().playAttackSound();
+                        arrowIterator.remove();
+                        gamePane.getChildren().remove(arrow.getSprite());
+                        hit = true;
+                        break;
+                    }
+                }
+            }
             if (hit) continue;
         }
 
@@ -405,7 +464,7 @@ public class GameWorld {
         checkCombatCollisions();
 
         spawnTimer += deltaTime;
-        if (spawnTimer > 2.5) {
+        if (spawnTimer > 4.0) {
             spawnTimer = 0;
             spawnEnemy();
         }
@@ -535,6 +594,7 @@ public class GameWorld {
         enemies.clear();
         items.clear();
         ghosts.clear();
+        skeletons.clear();
 
         root.setClip(new javafx.scene.shape.Rectangle(VIEW_W, VIEW_H));
 
@@ -608,6 +668,9 @@ public class GameWorld {
         }
         for (int i = 0; i < 2; i++) {
             spawnGhost();
+        }
+        for (int i = 0; i < 2; i++) {
+            spawnSkeleton();
         }
     }
 
@@ -841,6 +904,14 @@ public class GameWorld {
                     player.takeDamage(10);
                     SoundManager.getInstance().playHitSound();
                 }
+            }
+        }
+
+        for (SkeletonEnemy skeleton : skeletons) {
+            if (player.canDealDamage() && !player.isBowEquipped() &&
+                    player.getAttackBounds().intersects(skeleton.getSprite().getBoundsInParent())) {
+                skeleton.takeDamage(player.getAttackDamage());
+                SoundManager.getInstance().playSwordHitSound();
             }
         }
     }

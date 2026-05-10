@@ -23,7 +23,6 @@ public class LandingParticle {
         double ex = x + Math.cos(angle) * distance;
         double ey = y + Math.sin(angle) * 4;
 
-        // крупнее
         ellipse = new Ellipse(ex, ey, 5 + Math.random() * 3, 2.5);
 
         int gray = 130 + (int)(Math.random() * 50);

@@ -14,7 +14,6 @@ public class Platform {
     private double x, y, width, height;
     private static Image textureImage = null;
 
-    // Исчезающая механика
     private boolean vanishing = false;
     private State state = State.SOLID;
     private double stateTimer = 0;
