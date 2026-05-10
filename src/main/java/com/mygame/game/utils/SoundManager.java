@@ -99,7 +99,7 @@ public class SoundManager {
                 bowShootSound = new MediaPlayer(bowMedia);
             }
 
-            URL bgUrl = getClass().getResource("/sounds/background.mp3");
+            URL bgUrl = getClass().getResource("/sounds/bg_music.mp3");
             if (bgUrl != null) {
                 Media bgMedia = new Media(bgUrl.toString());
                 backgroundMusic = new MediaPlayer(bgMedia);

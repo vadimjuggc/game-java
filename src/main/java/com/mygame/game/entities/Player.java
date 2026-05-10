@@ -274,6 +274,7 @@ public class Player extends Entity {
             tabWasPressed = true;
             isBowEquipped = !isBowEquipped;
             updateWeaponAnimation();
+            gameWorld.onWeaponSwitch(isBowEquipped);
         } else if (!keysPressed.contains(KeyCode.TAB)) {
             tabWasPressed = false;
         }

@@ -1,5 +1,6 @@
 package com.mygame.game.ui;
 
+import com.mygame.game.utils.SoundManager;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -22,6 +23,9 @@ public class GameUI {
     private int comboCount = 0;
     private Rectangle arrowBar;
     private static final int MAX_ARROWS = 10;
+    private ImageView weaponPopupIcon;
+    private Label weaponPopupLabel;
+    private javafx.animation.FadeTransition weaponFade;
 
     private static final int MAX_HEALTH = 100;
     private static final double BAR_WIDTH = 120;
@@ -32,90 +36,106 @@ public class GameUI {
     public GameUI(Pane root) {
         this.root = root;
 
-        ImageView heartLabel = new ImageView(new javafx.scene.image.Image(getClass().getResourceAsStream("/images/ui/battle_icons/heart_icon.png")));
+        ImageView heartLabel = new ImageView(new Image(getClass().getResourceAsStream("/images/ui/battle_icons/heart_icon.png")));
         heartLabel.setFitWidth(32);
         heartLabel.setFitHeight(32);
         heartLabel.setLayoutX(8);
         heartLabel.setLayoutY(8);
 
         healthBarBg = new Rectangle(BAR_WIDTH, BAR_HEIGHT);
-        healthBarBg.setFill(Color.rgb(60, 0, 0, 0.8));
+        healthBarBg.setFill(Color.rgb(30, 10, 10, 0.85));
         healthBarBg.setArcWidth(8);
         healthBarBg.setArcHeight(8);
-        healthBarBg.setLayoutX(38);
+        healthBarBg.setLayoutX(48);
         healthBarBg.setLayoutY(13);
 
         healthBar = new Rectangle(BAR_WIDTH, BAR_HEIGHT);
-        healthBar.setFill(Color.LIMEGREEN);
+        healthBar.setFill(Color.rgb(160, 20, 20));
         healthBar.setArcWidth(8);
         healthBar.setArcHeight(8);
-        healthBar.setLayoutX(38);
+        healthBar.setLayoutX(48);
         healthBar.setLayoutY(13);
 
         healthValueLabel = new Label("100");
-        healthValueLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-        healthValueLabel.setTextFill(Color.WHITE);
-        healthValueLabel.setLayoutX(38 + BAR_WIDTH / 2 - 12);
+        healthValueLabel.setFont(Font.font("Palatino Linotype", FontWeight.BOLD, 13));
+        healthValueLabel.setTextFill(Color.rgb(220, 200, 200));
+        healthValueLabel.setStyle("-fx-effect: dropshadow(gaussian, #000000, 3, 0.8, 0, 0);");
+        healthValueLabel.setLayoutX(48 + BAR_WIDTH / 2 - 12);
         healthValueLabel.setLayoutY(13);
-
-        ImageView scoreIcon = new ImageView(new Image(getClass().getResourceAsStream("/images/ui/battle_icons/score_icon.png")));
-        scoreIcon.setFitHeight(40);
-        scoreIcon.setPreserveRatio(true);
-        scoreIcon.setLayoutX(8);
-        scoreIcon.setLayoutY(48);
-
-        scoreLabel = new Label("0");
-        scoreLabel.setFont(Font.font("Palatino Linotype", FontWeight.BOLD, 20));
-        scoreLabel.setTextFill(Color.color(0.85, 0.75, 0.4));
-        scoreLabel.setStyle("-fx-effect: dropshadow(gaussian, #000000, 4, 0.8, 0, 0);");
-        scoreLabel.setLayoutX(75);
-        scoreLabel.setLayoutY(53);
 
         ImageView arrowIcon = new ImageView(new Image(getClass().getResourceAsStream("/images/ui/battle_icons/arrow_icon.png")));
         arrowIcon.setFitWidth(32);
         arrowIcon.setFitHeight(32);
         arrowIcon.setLayoutX(8);
-        arrowIcon.setLayoutY(88);
+        arrowIcon.setLayoutY(48);
 
         Rectangle arrowBarBg = new Rectangle(BAR_WIDTH, BAR_HEIGHT);
-        arrowBarBg.setFill(Color.rgb(0, 0, 60, 0.8));
+        arrowBarBg.setFill(Color.rgb(10, 10, 30, 0.85));
         arrowBarBg.setArcWidth(8);
         arrowBarBg.setArcHeight(8);
-        arrowBarBg.setLayoutX(38);
-        arrowBarBg.setLayoutY(93);
+        arrowBarBg.setLayoutX(48);
+        arrowBarBg.setLayoutY(53);
 
         arrowBar = new Rectangle(BAR_WIDTH, BAR_HEIGHT);
-        arrowBar.setFill(Color.CORNFLOWERBLUE);
+        arrowBar.setFill(Color.rgb(50, 60, 120));
         arrowBar.setArcWidth(8);
         arrowBar.setArcHeight(8);
-        arrowBar.setLayoutX(38);
-        arrowBar.setLayoutY(93);
+        arrowBar.setLayoutX(48);
+        arrowBar.setLayoutY(53);
 
         arrowsLabel = new Label("10");
-        arrowsLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-        arrowsLabel.setTextFill(Color.WHITE);
-        arrowsLabel.setLayoutX(38 + BAR_WIDTH / 2 - 8);
-        arrowsLabel.setLayoutY(93);
+        arrowsLabel.setFont(Font.font("Palatino Linotype", FontWeight.BOLD, 13));
+        arrowsLabel.setTextFill(Color.rgb(200, 200, 220));
+        arrowsLabel.setStyle("-fx-effect: dropshadow(gaussian, #000000, 3, 0.8, 0, 0);");
+        arrowsLabel.setLayoutX(48 + BAR_WIDTH / 2 - 8);
+        arrowsLabel.setLayoutY(53);
 
-        weaponLabel = new Label("⚔️ Меч");
-        weaponLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        weaponLabel.setTextFill(Color.WHITE);
-        weaponLabel.setStyle("-fx-background-color: rgba(0,0,0,0.5); -fx-padding: 2 5 2 5;");
-        weaponLabel.setLayoutX(10);
-        weaponLabel.setLayoutY(125);
+        ImageView scoreIcon = new ImageView(new Image(getClass().getResourceAsStream("/images/ui/battle_icons/score_icon.png")));
+        scoreIcon.setFitHeight(40);
+        scoreIcon.setPreserveRatio(true);
+        scoreIcon.setLayoutX(8);
+        scoreIcon.setLayoutY(88);
+
+        scoreLabel = new Label("0");
+        scoreLabel.setFont(Font.font("Palatino Linotype", FontWeight.BOLD, 26));
+        scoreLabel.setTextFill(Color.color(0.7, 0.6, 0.3));
+        scoreLabel.setStyle("-fx-effect: dropshadow(gaussian, #000000, 4, 0.8, 0, 0);");
+        scoreLabel.setLayoutX(75);
+        scoreLabel.setLayoutY(95);
 
         comboLabel = new Label("");
         comboLabel.setFont(Font.font("Palatino Linotype", FontWeight.BOLD, 28));
-        comboLabel.setTextFill(Color.ORANGERED);
+        comboLabel.setTextFill(Color.rgb(180, 50, 50));
         comboLabel.setStyle("-fx-effect: dropshadow(gaussian, #000000, 6, 0.9, 0, 0);");
         comboLabel.setLayoutX(800 / 2.0 - 60);
         comboLabel.setLayoutY(80);
         comboLabel.setVisible(false);
 
-        root.getChildren().addAll(heartLabel, healthBarBg, healthBar, healthValueLabel,
+        weaponPopupIcon = new ImageView();
+        weaponPopupIcon.setFitWidth(32);
+        weaponPopupIcon.setFitHeight(32);
+        weaponPopupIcon.setLayoutX(800 / 2.0 - 70);
+        weaponPopupIcon.setLayoutY(520);
+        weaponPopupIcon.setOpacity(0);
+
+        weaponPopupLabel = new Label("⚔️ Меч");
+        weaponPopupLabel.setFont(Font.font("Palatino Linotype", FontWeight.BOLD, 22));
+        weaponPopupLabel.setTextFill(Color.rgb(200, 180, 120));
+        weaponPopupLabel.setStyle(
+                "-fx-background-color: rgba(0,0,0,0.35); " +
+                        "-fx-padding: 6 16 6 16; " +
+                        "-fx-background-radius: 8;"
+        );
+        weaponPopupLabel.setLayoutX(800 / 2.0 - 60);
+        weaponPopupLabel.setLayoutY(120);
+        weaponPopupLabel.setOpacity(0);
+
+        root.getChildren().addAll(
+                heartLabel, healthBarBg, healthBar, healthValueLabel,
                 arrowIcon, arrowBarBg, arrowBar, arrowsLabel,
                 scoreIcon, scoreLabel,
-                weaponLabel, comboLabel);
+                weaponPopupLabel, comboLabel
+        );
     }
 
     public void updateHealth(int health) {
@@ -124,11 +144,11 @@ public class GameUI {
         healthValueLabel.setText(String.valueOf(health));
 
         if (health < 30) {
-            healthBar.setFill(Color.RED);
+            healthBar.setFill(Color.rgb(100, 10, 10));
         } else if (health < 60) {
-            healthBar.setFill(Color.ORANGE);
+            healthBar.setFill(Color.rgb(130, 15, 15));
         } else {
-            healthBar.setFill(Color.LIMEGREEN);
+            healthBar.setFill(Color.rgb(160, 20, 20));
         }
     }
 
@@ -138,11 +158,19 @@ public class GameUI {
     }
 
     public void updateWeapon(boolean isBow) {
-        if (isBow) {
-            weaponLabel.setText("🏹 Лук");
-        } else {
-            weaponLabel.setText("⚔️ Меч");
-        }
+    }
+
+    public void showWeaponPopup(boolean isBow) {
+        if (weaponFade != null) weaponFade.stop();
+
+        weaponPopupLabel.setText(isBow ? "🏹 Лук" : "⚔️ Меч");
+        weaponPopupLabel.setOpacity(1.0);
+
+        weaponFade = new javafx.animation.FadeTransition(javafx.util.Duration.seconds(1.5), weaponPopupLabel);
+        weaponFade.setFromValue(1.0);
+        weaponFade.setToValue(0.0);
+        weaponFade.setDelay(javafx.util.Duration.seconds(0.8));
+        weaponFade.play();
     }
 
     public void updateArrows(int arrowsLeft) {
@@ -151,11 +179,11 @@ public class GameUI {
         arrowsLabel.setText(String.valueOf(arrowsLeft));
 
         if (arrowsLeft == 0) {
-            arrowBar.setFill(Color.RED);
+            arrowBar.setFill(Color.rgb(80, 10, 10));
         } else if (arrowsLeft <= 3) {
-            arrowBar.setFill(Color.ORANGE);
+            arrowBar.setFill(Color.rgb(80, 40, 10));
         } else {
-            arrowBar.setFill(Color.CORNFLOWERBLUE);
+            arrowBar.setFill(Color.rgb(50, 60, 120));
         }
     }
 
@@ -186,39 +214,39 @@ public class GameUI {
         overlay.setPrefSize(800, 600);
         overlay.setStyle("-fx-background-color: rgba(0,0,0,0.75);");
 
-        Label winLabel = new Label("YOU WIN!");
-        winLabel.setFont(Font.font("Arial", FontWeight.BOLD, 64));
-        winLabel.setTextFill(Color.GOLD);
-        winLabel.setLayoutX(800 / 2.0 - 180);
-        winLabel.setLayoutY(600 / 2.0 - 120);
+        ImageView winLabel = new ImageView(new Image(getClass().getResourceAsStream("/images/ui/you_win.png")));
+        winLabel.setFitWidth(556);
+        winLabel.setFitHeight(143);
+        winLabel.setPreserveRatio(false);
+        winLabel.setLayoutX(800 / 2.0 - 278);
+        winLabel.setLayoutY(600 / 2.0 - 160);
 
-        Label scoreInfo = new Label("Итоговый счёт: " + score);
-        scoreInfo.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-        scoreInfo.setTextFill(Color.WHITE);
-        scoreInfo.setLayoutX(800 / 2.0 - 110);
-        scoreInfo.setLayoutY(600 / 2.0 - 30);
-
-        Label restartBtn = new Label("[ Restart ]");
-        restartBtn.setFont(Font.font("Arial", FontWeight.BOLD, 28));
-        restartBtn.setTextFill(Color.LIGHTGREEN);
-        restartBtn.setLayoutX(800 / 2.0 - 85);
-        restartBtn.setLayoutY(600 / 2.0 + 40);
+        ImageView restartBtn = new ImageView(new Image(getClass().getResourceAsStream("/images/ui/win_restart.png")));
+        restartBtn.setFitWidth(240);
+        restartBtn.setFitHeight(90);
+        restartBtn.setLayoutX(800 / 2.0 - 120);
+        restartBtn.setLayoutY(600 / 2.0 + 50);
         restartBtn.setCursor(javafx.scene.Cursor.HAND);
-        restartBtn.setOnMouseEntered(e -> restartBtn.setTextFill(Color.GREEN));
-        restartBtn.setOnMouseExited(e -> restartBtn.setTextFill(Color.LIGHTGREEN));
-        restartBtn.setOnMouseClicked(e -> onRestart.run());
+        restartBtn.setOnMouseEntered(e -> restartBtn.setOpacity(0.75));
+        restartBtn.setOnMouseExited(e -> restartBtn.setOpacity(1.0));
+        restartBtn.setOnMouseClicked(e -> {
+            SoundManager.getInstance().playClickSound();
+            onRestart.run();
+        });
 
-        Label menuBtn = new Label("[ Main Menu ]");
-        menuBtn.setFont(Font.font("Arial", FontWeight.BOLD, 28));
-        menuBtn.setTextFill(Color.LIGHTYELLOW);
-        menuBtn.setLayoutX(800 / 2.0 - 105);
-        menuBtn.setLayoutY(600 / 2.0 + 100);
+        ImageView menuBtn = new ImageView(new Image(getClass().getResourceAsStream("/images/ui/win_main_menu.png")));
+        menuBtn.setFitWidth(240);
+        menuBtn.setFitHeight(90);
+        menuBtn.setLayoutX(800 / 2.0 - 120);
+        menuBtn.setLayoutY(600 / 2.0 + 155);
         menuBtn.setCursor(javafx.scene.Cursor.HAND);
-        menuBtn.setOnMouseEntered(e -> menuBtn.setTextFill(Color.YELLOW));
-        menuBtn.setOnMouseExited(e -> menuBtn.setTextFill(Color.LIGHTYELLOW));
-        menuBtn.setOnMouseClicked(e -> onMainMenu.run());
-
-        overlay.getChildren().addAll(winLabel, scoreInfo, restartBtn, menuBtn);
+        menuBtn.setOnMouseEntered(e -> menuBtn.setOpacity(0.75));
+        menuBtn.setOnMouseExited(e -> menuBtn.setOpacity(1.0));
+        menuBtn.setOnMouseClicked(e -> {
+            SoundManager.getInstance().playClickSound();
+            onMainMenu.run();
+        });
+        overlay.getChildren().addAll(winLabel, restartBtn, menuBtn);
         root.getChildren().add(overlay);
     }
 }

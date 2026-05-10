@@ -1,6 +1,7 @@
 package com.mygame.game;
 
 import com.mygame.game.ui.MainMenu;
+import com.mygame.game.utils.SoundManager;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
@@ -30,7 +31,7 @@ public class App extends Application {
         if (mainMenu != null) {
             mainMenu.stopMenuMusic();
         }
-
+        SoundManager.getInstance().restartBackgroundMusic();
         Pane root = new Pane();
         root.setPrefSize(800, 600);
 

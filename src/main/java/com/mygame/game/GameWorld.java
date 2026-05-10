@@ -205,8 +205,6 @@ public class GameWorld {
         gamePane.setTranslateX(-cameraX);
         gamePane.setTranslateY(0);
 
-        gameUI.updateWeapon(player.isBowEquipped());
-
         Iterator<Enemy> enemyIterator = enemies.iterator();
         while (enemyIterator.hasNext()) {
             Enemy enemy = enemyIterator.next();
@@ -306,7 +304,7 @@ public class GameWorld {
         checkCombatCollisions();
 
         spawnTimer += deltaTime;
-        if (spawnTimer > 5.0) {
+        if (spawnTimer > 2.5) {
             spawnTimer = 0;
             spawnEnemy();
         }
@@ -467,6 +465,7 @@ public class GameWorld {
         root.getChildren().add(vignetteOverlay);
 
         gameUI = new GameUI(root);
+        SoundManager.getInstance().restartBackgroundMusic();
 
         for (int i = 0; i < 5; i++) {
             spawnEnemy();
@@ -487,6 +486,10 @@ public class GameWorld {
         );
     }
 
+    public void onWeaponSwitch(boolean isBow) {
+        gameUI.showWeaponPopup(isBow);
+    }
+
     private void showGameOverScreen() {
         SoundManager.getInstance().stopBackgroundMusic();
         javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(0.7));
@@ -505,19 +508,14 @@ public class GameWorld {
         gameOverView.setX(VIEW_W / 2 - scaledWidth / 2);
         gameOverView.setY(VIEW_H / 2 - targetHeight / 2 - 40);
 
-        Label scoreLabel = new Label("Score: " + gameUI.getScore());
-        scoreLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-        scoreLabel.setTextFill(Color.BLACK);
-        scoreLabel.setLayoutX(VIEW_W / 2 - 50);
-        scoreLabel.setLayoutY(VIEW_H / 2 + targetHeight / 2 - 20);
+        ImageView restartLabel = new ImageView(new Image(getClass().getResourceAsStream("/images/ui/press_r.png")));
+        restartLabel.setFitWidth(500);
+        restartLabel.setFitHeight(70);
+        restartLabel.setPreserveRatio(false);
+        restartLabel.setX(VIEW_W / 2 - 250);
+        restartLabel.setY(VIEW_H / 2 + targetHeight / 2 + 20);
 
-        Label restartLabel = new Label("Press R to restart");
-        restartLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-        restartLabel.setTextFill(Color.BLUEVIOLET);
-        restartLabel.setLayoutX(VIEW_W / 2 - 80);
-        restartLabel.setLayoutY(VIEW_H / 2 + targetHeight / 2 + 20);
-
-        root.getChildren().addAll(gameOverView, scoreLabel, restartLabel);
+        root.getChildren().addAll(gameOverView, restartLabel);
     }
 
     private void checkPlatformCollisions(Entity entity, double oldY) {
