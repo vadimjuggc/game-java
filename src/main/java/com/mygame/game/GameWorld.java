@@ -47,6 +47,8 @@ public class GameWorld {
     private double cameraX = 0;
     private int comboCount = 0;
     private int lastPlayerHealth = 100;
+    private double footstepTimer = 0;
+    private static final double FOOTSTEP_INTERVAL = 0.32;
     private int comboMultiplier = 1;
     private List<SlashEffect> slashEffects = new ArrayList<>();
     private double comboTimer = 0;
@@ -245,6 +247,15 @@ public class GameWorld {
         }
 
         darkParticles.removeIf(p -> !p.update(deltaTime));
+        if (player.isMoving()) {
+            footstepTimer += deltaTime;
+            if (footstepTimer >= FOOTSTEP_INTERVAL) {
+                footstepTimer = 0;
+                SoundManager.getInstance().playFootstep();
+            }
+        } else {
+            footstepTimer = 0;
+        }
         bloodParticles.removeIf(p -> !p.update(deltaTime));
         slashEffects.removeIf(s -> !s.update(deltaTime));
 

@@ -21,6 +21,7 @@ public class SoundManager {
     private MediaPlayer doubleKillSound;
     private MediaPlayer tripleKillSound;
     private MediaPlayer ultraKillSound;
+    private MediaPlayer footstepSound;
 
     private SoundManager() {
         loadSounds();
@@ -55,6 +56,12 @@ public class SoundManager {
             URL tripleUrl = getClass().getResource("/sounds/ui_sounds/triple_kill.mp3");
             if (tripleUrl != null) {
                 tripleKillSound = new MediaPlayer(new Media(tripleUrl.toString()));
+            }
+
+            URL footstepUrl = getClass().getResource("/sounds/character/walk/footstep_sound.mp3");
+            if (footstepUrl != null) {
+                footstepSound = new MediaPlayer(new Media(footstepUrl.toString()));
+                footstepSound.setVolume(0.4);
             }
 
             URL ultraUrl = getClass().getResource("/sounds/ui_sounds/ultra_kill.mp3");
@@ -134,6 +141,14 @@ public class SoundManager {
             healSound.stop();
             healSound.seek(javafx.util.Duration.ZERO);
             healSound.play();
+        }
+    }
+
+    public void playFootstep() {
+        if (footstepSound != null) {
+            footstepSound.stop();
+            footstepSound.seek(javafx.util.Duration.ZERO);
+            footstepSound.play();
         }
     }
 

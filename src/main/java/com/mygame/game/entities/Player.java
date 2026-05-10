@@ -492,6 +492,10 @@ public class Player extends Entity {
     public void setOnGround(boolean onGround) { this.onGround = onGround; }
     public boolean canDealDamage() { return canDealDamage; }
 
+    public boolean isMoving() {
+        return (movingLeft || movingRight) && onGround;
+    }
+
     public double getAttackCooldownRatio() {
         if (attackCooldown <= 0) return 1.0;
         return 1.0 - (attackCooldown / ATTACK_COOLDOWN_MAX);
