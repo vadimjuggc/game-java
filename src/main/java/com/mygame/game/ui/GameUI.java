@@ -18,6 +18,8 @@ public class GameUI {
     private Rectangle healthBar;
     private Rectangle healthBarBg;
     private int score = 0;
+    private Label comboLabel;
+    private int comboCount = 0;
     private Rectangle arrowBar;
     private static final int MAX_ARROWS = 10;
 
@@ -102,12 +104,18 @@ public class GameUI {
         weaponLabel.setLayoutX(10);
         weaponLabel.setLayoutY(125);
 
-        root.getChildren().addAll(
-                heartLabel, healthBarBg, healthBar, healthValueLabel,
+        comboLabel = new Label("");
+        comboLabel.setFont(Font.font("Palatino Linotype", FontWeight.BOLD, 28));
+        comboLabel.setTextFill(Color.ORANGERED);
+        comboLabel.setStyle("-fx-effect: dropshadow(gaussian, #000000, 6, 0.9, 0, 0);");
+        comboLabel.setLayoutX(800 / 2.0 - 60);
+        comboLabel.setLayoutY(80);
+        comboLabel.setVisible(false);
+
+        root.getChildren().addAll(heartLabel, healthBarBg, healthBar, healthValueLabel,
                 arrowIcon, arrowBarBg, arrowBar, arrowsLabel,
                 scoreIcon, scoreLabel,
-                weaponLabel
-        );
+                weaponLabel, comboLabel);
     }
 
     public void updateHealth(int health) {
@@ -153,6 +161,24 @@ public class GameUI {
 
     public int getScore() {
         return score;
+    }
+
+    public void showCombo(int combo, int multiplier) {
+        comboLabel.setVisible(true);
+        if (combo == 1) {
+            comboLabel.setText("");
+            comboLabel.setVisible(false);
+        } else if (multiplier >= 3) {
+            comboLabel.setText("x" + multiplier + " COMBO " + combo + "!");
+            comboLabel.setTextFill(Color.GOLD);
+        } else {
+            comboLabel.setText("x" + multiplier + " COMBO " + combo);
+            comboLabel.setTextFill(Color.ORANGERED);
+        }
+    }
+
+    public void resetCombo() {
+        comboLabel.setVisible(false);
     }
 
     public void showWinScreen(Runnable onRestart, Runnable onMainMenu) {

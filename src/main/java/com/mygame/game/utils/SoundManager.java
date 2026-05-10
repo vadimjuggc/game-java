@@ -16,6 +16,8 @@ public class SoundManager {
     private MediaPlayer swordHitSound;
     private MediaPlayer healSound;
     private MediaPlayer slimeAttackSound;
+    private MediaPlayer gameOverSound;
+    private MediaPlayer youWinSound;
 
     private SoundManager() {
         loadSounds();
@@ -48,6 +50,12 @@ public class SoundManager {
                 slimeAttackSound = new MediaPlayer(slimeAttackMedia);
             }
 
+            URL youWinUrl = getClass().getResource("/sounds/ui_sounds/congratulations.mp3");
+            if (youWinUrl != null) {
+                Media youWinMedia = new Media(youWinUrl.toString());
+                youWinSound = new MediaPlayer(youWinMedia);
+            }
+
             URL attackUrl = getClass().getResource("/sounds/slime/slime_hit_sound.mp3");
             if (attackUrl != null) {
                 Media attackMedia = new Media(attackUrl.toString());
@@ -78,6 +86,12 @@ public class SoundManager {
             if (swordSwingUrl != null) {
                 Media swingMedia = new Media(swordSwingUrl.toString());
                 swordSwingSound = new MediaPlayer(swingMedia);
+            }
+
+            URL gameOverUrl = getClass().getResource("/sounds/ui_sounds/game_over_sound.mp3");
+            if (gameOverUrl != null) {
+                Media gameOverMedia = new Media(gameOverUrl.toString());
+                gameOverSound = new MediaPlayer(gameOverMedia);
             }
 
             URL swordHitUrl = getClass().getResource("/sounds/weapons/sword/violent-sword-sound.mp3");
@@ -129,6 +143,21 @@ public class SoundManager {
         }
     }
 
+    public void playYouWinSound() {
+        if (youWinSound != null) {
+            youWinSound.stop();
+            youWinSound.seek(javafx.util.Duration.ZERO);
+            youWinSound.play();
+        }
+    }
+
+    public void playGameOverSound() {
+        if (gameOverSound != null) {
+            gameOverSound.stop();
+            gameOverSound.seek(javafx.util.Duration.ZERO);
+            gameOverSound.play();
+        }
+    }
 
     public void playSwordSwingSound() {
         if (swordSwingSound != null) {

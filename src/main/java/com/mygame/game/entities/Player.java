@@ -50,6 +50,7 @@ public class Player extends Entity {
     private double shootCooldown = 0;
     private ImageView weaponSprite;
     private boolean lastMovingRight = true;
+    private boolean tabWasPressed = false;
 
     private FrameAnimation bowIdleAnimation;
     private FrameAnimation bowShootAnimation;
@@ -268,9 +269,12 @@ public class Player extends Entity {
             onGround = false;
         }
 
-        if (keysPressed.contains(KeyCode.TAB)) {
+        if (keysPressed.contains(KeyCode.TAB) && !tabWasPressed) {
+            tabWasPressed = true;
             isBowEquipped = !isBowEquipped;
             updateWeaponAnimation();
+        } else if (!keysPressed.contains(KeyCode.TAB)) {
+            tabWasPressed = false;
         }
 
         if (keysPressed.contains(KeyCode.Q) && !attacking && shootCooldown <= 0) {
@@ -283,10 +287,14 @@ public class Player extends Entity {
 
         if (keysPressed.contains(KeyCode.E) && attackCooldown <= 0 && !attacking) {
             if (isBowEquipped) return;
-
             attacking = true;
             attackCooldown = 20;
             currentState = State.ATTACKING;
+            gameWorld.spawnSlash(
+                    x + (facingRight ? WIDTH + 10 : -20),
+                    y + HEIGHT / 2,
+                    facingRight
+            );
 
             if (facingRight) {
                 currentAnimation = attackRightAnimation;
@@ -379,6 +387,7 @@ public class Player extends Entity {
         if (movingRight) x += SPEED * deltaTime;
 
         velocityY += GRAVITY * deltaTime;
+        if (velocityY > 600) velocityY = 600; // ограничение скорости падения
         y += velocityY * deltaTime;
 
         // Границы расширенного мира

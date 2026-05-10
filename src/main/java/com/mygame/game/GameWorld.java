@@ -1,24 +1,21 @@
 package com.mygame.game;
 
-import com.mygame.game.entities.Entity;
-import com.mygame.game.entities.Item;
-import com.mygame.game.entities.Platform;
+import com.mygame.game.entities.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Pane;
-import com.mygame.game.entities.Player;
-import com.mygame.game.entities.Enemy;
 import com.mygame.game.utils.SoundManager;
 import com.mygame.game.ui.GameUI;
 
 import java.util.*;
 
 import javafx.scene.paint.Color;
+import javafx.scene.paint.RadialGradient;
+import javafx.scene.paint.CycleMethod;
+import javafx.scene.paint.Stop;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import com.mygame.game.entities.Arrow;
-import com.mygame.game.entities.DamageNumber;
 import javafx.scene.control.Label;
 
 public class GameWorld {
@@ -40,11 +37,19 @@ public class GameWorld {
     private Random random = new Random();
     private ImageView background;
     private double spawnTimer = 0;
+    private javafx.scene.shape.Rectangle vignetteOverlay;
     private boolean gameOver = false;
     private boolean gameWon = false;
     private Runnable onMainMenuCallback;
     private boolean paused = false;
     private double cameraX = 0;
+    private int comboCount = 0;
+    private int lastPlayerHealth = 100;
+    private int comboMultiplier = 1;
+    private List<SlashEffect> slashEffects = new ArrayList<>();
+    private double comboTimer = 0;
+    private static final double COMBO_TIMEOUT = 3.0;
+    private List<BloodParticle> bloodParticles = new ArrayList<>();
 
     public GameWorld(Pane root, Runnable onMainMenuCallback) {
         this.root = root;
@@ -73,6 +78,19 @@ public class GameWorld {
 
         root.getChildren().add(gamePane);
 
+        vignetteOverlay = new javafx.scene.shape.Rectangle(VIEW_W, VIEW_H);
+        vignetteOverlay.setFill(new RadialGradient(
+                0, 0,
+                0.5, 0.5,
+                0.7,
+                true,
+                CycleMethod.NO_CYCLE,
+                new Stop(0, Color.TRANSPARENT),
+                new Stop(1, Color.rgb(150, 0, 0, 0.0))
+        ));
+        vignetteOverlay.setMouseTransparent(true);
+        root.getChildren().add(vignetteOverlay);
+
         this.gameUI = new GameUI(root);
 
         for (int i = 0; i < 5; i++) {
@@ -84,6 +102,17 @@ public class GameWorld {
         new DamageNumber(gamePane, damage, x, y, isPlayer);
     }
 
+    public void spawnSlash(double x, double y, boolean facingRight) {
+        slashEffects.add(new SlashEffect(gamePane, x, y, facingRight));
+    }
+
+    public void spawnBlood(double x, double y) {
+        int count = 6 + random.nextInt(6);
+        for (int i = 0; i < count; i++) {
+            bloodParticles.add(new BloodParticle(gamePane, x, y));
+        }
+    }
+
     public void setKeysPressed(Set<KeyCode> keys) {
         this.keysPressed = keys;
     }
@@ -91,6 +120,15 @@ public class GameWorld {
     public void update(double deltaTime) {
         if (gameOver || gameWon) return;
         if (paused) return;
+        if (comboCount > 0) {
+            comboTimer += deltaTime;
+            if (comboTimer >= COMBO_TIMEOUT) {
+                comboCount = 0;
+                comboMultiplier = 1;
+                comboTimer = 0;
+                gameUI.resetCombo();
+            }
+        }
 
         int arrowsBefore = player.getArrowsLeft();
         player.handleInput(keysPressed);
@@ -124,7 +162,13 @@ public class GameWorld {
             Enemy enemy = enemyIterator.next();
 
             if (enemy.isDead()) {
-                gameUI.addScore(10);
+                comboCount++;
+                comboTimer = 0;
+                comboMultiplier = Math.min(comboCount, 5);
+                int points = 10 * comboMultiplier;
+                spawnBlood(enemy.getX() + enemy.getWidth() / 2, enemy.getY() + enemy.getHeight() / 2);
+                gameUI.addScore(points);
+                gameUI.showCombo(comboCount, comboMultiplier);
 
                 if (gameUI.getScore() >= WIN_SCORE) {
                     gameWon = true;
@@ -149,6 +193,8 @@ public class GameWorld {
             enemy.update(deltaTime);
             checkPlatformCollisions(enemy, oldEnemyY);
         }
+        bloodParticles.removeIf(p -> !p.update(deltaTime));
+        slashEffects.removeIf(s -> !s.update(deltaTime));
 
         Iterator<Arrow> arrowIterator = player.getArrows().iterator();
         while (arrowIterator.hasNext()) {
@@ -192,6 +238,37 @@ public class GameWorld {
         if (spawnTimer > 5.0) {
             spawnTimer = 0;
             spawnEnemy();
+        }
+
+        int currentHealth = player.getHealth();
+        if (currentHealth < lastPlayerHealth) {
+            spawnBlood(player.getX() + player.getWidth() / 2, player.getY() + player.getHeight() / 2);
+        }
+        lastPlayerHealth = currentHealth;
+
+        int hp = player.getHealth();
+        if (hp < 30) {
+            double pulse = 0.5 + 0.25 * Math.sin(System.currentTimeMillis() / 200.0);
+            vignetteOverlay.setFill(new RadialGradient(
+                    0, 0, 0.5, 0.5, 0.7, true,
+                    CycleMethod.NO_CYCLE,
+                    new Stop(0, Color.TRANSPARENT),
+                    new Stop(1, Color.rgb(160, 0, 0, pulse))
+            ));
+        } else if (hp < 60) {
+            vignetteOverlay.setFill(new RadialGradient(
+                    0, 0, 0.5, 0.5, 0.7, true,
+                    CycleMethod.NO_CYCLE,
+                    new Stop(0, Color.TRANSPARENT),
+                    new Stop(1, Color.rgb(120, 0, 0, 0.35))
+            ));
+        } else {
+            vignetteOverlay.setFill(new RadialGradient(
+                    0, 0, 0.5, 0.5, 0.7, true,
+                    CycleMethod.NO_CYCLE,
+                    new Stop(0, Color.TRANSPARENT),
+                    new Stop(1, Color.rgb(0, 0, 0, 0.0))
+            ));
         }
 
         gameUI.updateHealth(player.getHealth());
@@ -257,6 +334,19 @@ public class GameWorld {
 
         root.getChildren().add(gamePane);
 
+        vignetteOverlay = new javafx.scene.shape.Rectangle(VIEW_W, VIEW_H);
+        vignetteOverlay.setFill(new RadialGradient(
+                0, 0,
+                0.5, 0.5,
+                0.7,
+                true,
+                CycleMethod.NO_CYCLE,
+                new Stop(0, Color.TRANSPARENT),
+                new Stop(1, Color.rgb(150, 0, 0, 0.0))
+        ));
+        vignetteOverlay.setMouseTransparent(true);
+        root.getChildren().add(vignetteOverlay);
+
         gameUI = new GameUI(root);
 
         for (int i = 0; i < 5; i++) {
@@ -269,9 +359,9 @@ public class GameWorld {
     }
 
     private void showWinScreen() {
-        gameUI.showWinScreen(
-                () -> restart(),
-                () -> {
+        SoundManager.getInstance().stopBackgroundMusic();
+        SoundManager.getInstance().playYouWinSound();
+        gameUI.showWinScreen(() -> restart(), () -> {
                     SoundManager.getInstance().stopBackgroundMusic();
                     if (onMainMenuCallback != null) onMainMenuCallback.run();
                 }
@@ -279,6 +369,11 @@ public class GameWorld {
     }
 
     private void showGameOverScreen() {
+        SoundManager.getInstance().stopBackgroundMusic();
+        javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(0.7));
+        delay.setOnFinished(e -> SoundManager.getInstance().playGameOverSound());
+        delay.play();
+
         Image gameOverImage = new Image(getClass().getResourceAsStream("/images/ui/game_over.png"));
         double targetHeight = 300;
         double scale = targetHeight / gameOverImage.getHeight();
@@ -310,28 +405,34 @@ public class GameWorld {
         boolean onPlatform = false;
 
         for (Platform platform : level.getPlatforms()) {
-            if (entity.getY() + entity.getHeight() >= platform.getY() &&
-                    entity.getY() + entity.getHeight() <= platform.getY() + 10 &&
-                    oldY + entity.getHeight() <= platform.getY() &&
-                    entity.getX() + entity.getWidth() > platform.getX() &&
-                    entity.getX() < platform.getX() + platform.getWidth()) {
+            double entityBottom = entity.getY() + entity.getHeight();
+            double entityTop = entity.getY();
+            double entityLeft = entity.getX();
+            double entityRight = entity.getX() + entity.getWidth();
 
+            double platTop = platform.getY();
+            double platBottom = platform.getY() + platform.getHeight();
+            double platLeft = platform.getX();
+            double platRight = platform.getX() + platform.getWidth();
+
+            boolean horizontalOverlap = entityRight > platLeft && entityLeft < platRight;
+
+            if (horizontalOverlap &&
+                    oldY + entity.getHeight() <= platTop + 5 &&
+                    entityBottom >= platTop) {
                 if (entity instanceof Player) {
-                    ((Player) entity).landOnPlatform(platform.getY());
+                    ((Player) entity).landOnPlatform(platTop);
                 } else if (entity instanceof Enemy) {
-                    ((Enemy) entity).landOnPlatform(platform.getY());
+                    ((Enemy) entity).landOnPlatform(platTop);
                 }
                 onPlatform = true;
                 break;
             }
 
-            if (entity.getY() <= platform.getY() + platform.getHeight() &&
-                    entity.getY() >= platform.getY() + platform.getHeight() - 10 &&
-                    oldY >= platform.getY() + platform.getHeight() &&
-                    entity.getX() + entity.getWidth() > platform.getX() &&
-                    entity.getX() < platform.getX() + platform.getWidth()) {
-
-                entity.setPosition(entity.getX(), platform.getY() + platform.getHeight());
+            if (horizontalOverlap &&
+                    oldY >= platBottom - 5 &&
+                    entityTop <= platBottom) {
+                entity.setPosition(entity.getX(), platBottom);
                 if (entity instanceof Player) {
                     ((Player) entity).stopVerticalMovement();
                 } else if (entity instanceof Enemy) {
@@ -348,7 +449,7 @@ public class GameWorld {
             }
         }
 
-        if (entity.getY() + entity.getHeight() > Level.WORLD_HEIGHT) {
+        if (entity.getY() + entity.getHeight() >= Level.WORLD_HEIGHT) {
             if (entity instanceof Player) {
                 ((Player) entity).landOnPlatform(Level.WORLD_HEIGHT);
             } else if (entity instanceof Enemy) {
@@ -463,15 +564,11 @@ public class GameWorld {
     }
 
     private void spawnEnemy() {
-        // Спавн-точки на всех зонах расширенного уровня
         double[][] platformList = {
-                // Центральная зона
                 {100, 430}, {200, 430}, {580, 430}, {680, 430},
                 {340, 380}, {440, 380}, {450, 330}, {530, 330},
-                // Правая зона
                 {850, 430}, {900, 430}, {1050, 360}, {1200, 420},
                 {1350, 310}, {1500, 430},
-                // Дальняя зона
                 {1650, 420}, {1720, 420}, {1820, 340}, {1980, 420},
                 {2100, 300}, {2250, 430}
         };
