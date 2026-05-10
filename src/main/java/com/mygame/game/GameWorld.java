@@ -12,6 +12,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.RadialGradient;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.Stop;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.image.Image;
@@ -27,6 +28,7 @@ public class GameWorld {
 
     private Pane root;
     private Pane pauseOverlay;
+    private Pane shakePane;
     private Pane gamePane;
     private Player player;
     private List<Enemy> enemies;
@@ -37,7 +39,7 @@ public class GameWorld {
     private Random random = new Random();
     private ImageView background;
     private double spawnTimer = 0;
-    private javafx.scene.shape.Rectangle vignetteOverlay;
+    private Rectangle vignetteOverlay;
     private boolean gameOver = false;
     private boolean gameWon = false;
     private Runnable onMainMenuCallback;
@@ -50,6 +52,15 @@ public class GameWorld {
     private double comboTimer = 0;
     private static final double COMBO_TIMEOUT = 3.0;
     private List<BloodParticle> bloodParticles = new ArrayList<>();
+    private List<DarkParticle> darkParticles = new ArrayList<>();
+    private double idleParticleTimer = 0;
+
+    private Rectangle swordBarBg;
+    private Rectangle swordBar;
+    private static final double SWORD_BAR_W = 30;
+    private static final double SWORD_BAR_H = 4;
+    private double shakeDuration = 0;
+    private double shakeIntensity = 0;
 
     public GameWorld(Pane root, Runnable onMainMenuCallback) {
         this.root = root;
@@ -60,7 +71,11 @@ public class GameWorld {
         root.setPrefSize(VIEW_W, VIEW_H);
         root.setClip(new javafx.scene.shape.Rectangle(VIEW_W, VIEW_H));
 
+        shakePane = new Pane();
         gamePane = new Pane();
+        shakePane.getChildren().add(gamePane);
+        root.getChildren().add(shakePane);
+        shakePane.setClip(new javafx.scene.shape.Rectangle(VIEW_W, VIEW_H));
 
         Image bgImage = new Image(getClass().getResourceAsStream("/images/backgrounds/long_bg_loop.gif"));
         background = new ImageView(bgImage);
@@ -76,9 +91,21 @@ public class GameWorld {
         gamePane.getChildren().add(player.getSprite());
         gamePane.getChildren().add(player.getWeaponSprite());
 
-        root.getChildren().add(gamePane);
+        swordBarBg = new Rectangle(SWORD_BAR_W, SWORD_BAR_H);
+        swordBarBg.setFill(Color.rgb(40, 40, 40, 0.8));
+        swordBarBg.setArcWidth(3);
+        swordBarBg.setArcHeight(3);
+        swordBarBg.setOpacity(0);
 
-        vignetteOverlay = new javafx.scene.shape.Rectangle(VIEW_W, VIEW_H);
+        swordBar = new Rectangle(SWORD_BAR_W, SWORD_BAR_H);
+        swordBar.setFill(Color.SILVER);
+        swordBar.setArcWidth(3);
+        swordBar.setArcHeight(3);
+        swordBar.setOpacity(0);
+
+        gamePane.getChildren().addAll(swordBarBg, swordBar);
+
+        vignetteOverlay = new Rectangle(VIEW_W, VIEW_H);
         vignetteOverlay.setFill(new RadialGradient(
                 0, 0,
                 0.5, 0.5,
@@ -111,6 +138,13 @@ public class GameWorld {
         for (int i = 0; i < count; i++) {
             bloodParticles.add(new BloodParticle(gamePane, x, y));
         }
+    }
+
+    private void spawnIdleParticles() {
+        darkParticles.add(new DarkParticle(gamePane,
+                player.getX() + player.getWidth() / 2,
+                player.getY() + player.getHeight()
+        ));
     }
 
     public void setKeysPressed(Set<KeyCode> keys) {
@@ -153,7 +187,21 @@ public class GameWorld {
         cameraX = targetCamX;
 
         background.setX(cameraX * 0.4);
+
+        if (shakeDuration > 0) {
+            shakeDuration -= deltaTime;
+            double offsetX = (random.nextDouble() * 2 - 1) * shakeIntensity;
+            double offsetY = (random.nextDouble() * 2 - 1) * shakeIntensity;
+            shakePane.setTranslateX(offsetX);
+            shakePane.setTranslateY(offsetY);
+        } else {
+            shakeDuration = 0;
+            shakePane.setTranslateX(0);
+            shakePane.setTranslateY(0);
+        }
+
         gamePane.setTranslateX(-cameraX);
+        gamePane.setTranslateY(0);
 
         gameUI.updateWeapon(player.isBowEquipped());
 
@@ -167,8 +215,10 @@ public class GameWorld {
                 comboMultiplier = Math.min(comboCount, 5);
                 int points = 10 * comboMultiplier;
                 spawnBlood(enemy.getX() + enemy.getWidth() / 2, enemy.getY() + enemy.getHeight() / 2);
+                startShake(0.1, 3);
                 gameUI.addScore(points);
                 gameUI.showCombo(comboCount, comboMultiplier);
+                SoundManager.getInstance().playComboSound(comboCount);
 
                 if (gameUI.getScore() >= WIN_SCORE) {
                     gameWon = true;
@@ -193,8 +243,18 @@ public class GameWorld {
             enemy.update(deltaTime);
             checkPlatformCollisions(enemy, oldEnemyY);
         }
+
+        darkParticles.removeIf(p -> !p.update(deltaTime));
         bloodParticles.removeIf(p -> !p.update(deltaTime));
         slashEffects.removeIf(s -> !s.update(deltaTime));
+
+        if (player.isIdle() && player.isOnGround()) {
+            idleParticleTimer += deltaTime;
+            if (idleParticleTimer >= 0.12) {
+                idleParticleTimer = 0;
+                spawnIdleParticles();
+            }
+        }
 
         Iterator<Arrow> arrowIterator = player.getArrows().iterator();
         while (arrowIterator.hasNext()) {
@@ -243,6 +303,7 @@ public class GameWorld {
         int currentHealth = player.getHealth();
         if (currentHealth < lastPlayerHealth) {
             spawnBlood(player.getX() + player.getWidth() / 2, player.getY() + player.getHeight() / 2);
+            startShake(0.2, 6);
         }
         lastPlayerHealth = currentHealth;
 
@@ -271,6 +332,32 @@ public class GameWorld {
             ));
         }
 
+        double ratio = player.getAttackCooldownRatio();
+        double barX = player.getX() - 3;
+        double barY = player.getY() - 10;
+
+        swordBarBg.setX(barX);
+        swordBarBg.setY(barY);
+        swordBar.setX(barX);
+        swordBar.setY(barY);
+        swordBar.setWidth(SWORD_BAR_W * ratio);
+
+        if (player.isBowEquipped() || ratio >= 1.0) {
+            swordBarBg.setOpacity(Math.max(0, swordBarBg.getOpacity() - 0.05));
+            swordBar.setOpacity(Math.max(0, swordBar.getOpacity() - 0.05));
+        } else {
+            swordBarBg.setOpacity(1.0);
+            swordBar.setOpacity(1.0);
+        }
+
+        if (ratio < 0.4) {
+            swordBar.setFill(Color.rgb(180, 50, 50));
+        } else if (ratio < 0.7) {
+            swordBar.setFill(Color.ORANGE);
+        } else {
+            swordBar.setFill(Color.SILVER);
+        }
+
         gameUI.updateHealth(player.getHealth());
         gameUI.updateArrows(player.getArrowsLeft());
 
@@ -278,6 +365,11 @@ public class GameWorld {
             gameOver = true;
             showGameOverScreen();
         }
+    }
+
+    public void startShake(double duration, double intensity) {
+        shakeDuration = duration;
+        shakeIntensity = intensity;
     }
 
     private void spawnItem(double x, double y) {
@@ -316,7 +408,11 @@ public class GameWorld {
 
         root.setClip(new javafx.scene.shape.Rectangle(VIEW_W, VIEW_H));
 
+        shakePane = new Pane();
         gamePane = new Pane();
+        shakePane.getChildren().add(gamePane);
+        root.getChildren().add(shakePane);
+        shakePane.setClip(new javafx.scene.shape.Rectangle(VIEW_W, VIEW_H));
 
         Image bgImage = new Image(getClass().getResourceAsStream("/images/backgrounds/long_bg_loop.gif"));
         background = new ImageView(bgImage);
@@ -332,9 +428,21 @@ public class GameWorld {
         gamePane.getChildren().add(player.getSprite());
         gamePane.getChildren().add(player.getWeaponSprite());
 
-        root.getChildren().add(gamePane);
+        swordBarBg = new Rectangle(SWORD_BAR_W, SWORD_BAR_H);
+        swordBarBg.setFill(Color.rgb(40, 40, 40, 0.8));
+        swordBarBg.setArcWidth(3);
+        swordBarBg.setArcHeight(3);
+        swordBarBg.setOpacity(0);
 
-        vignetteOverlay = new javafx.scene.shape.Rectangle(VIEW_W, VIEW_H);
+        swordBar = new Rectangle(SWORD_BAR_W, SWORD_BAR_H);
+        swordBar.setFill(Color.SILVER);
+        swordBar.setArcWidth(3);
+        swordBar.setArcHeight(3);
+        swordBar.setOpacity(0);
+
+        gamePane.getChildren().addAll(swordBarBg, swordBar);
+
+        vignetteOverlay = new Rectangle(VIEW_W, VIEW_H);
         vignetteOverlay.setFill(new RadialGradient(
                 0, 0,
                 0.5, 0.5,
@@ -540,7 +648,7 @@ public class GameWorld {
         while (iterator.hasNext()) {
             Enemy enemy = iterator.next();
 
-            if (player.isAttacking() &&
+            if (player.canDealDamage() &&
                     player.getAttackBounds().intersects(enemy.getSprite().getBoundsInParent())) {
                 enemy.takeDamage(player.getAttackDamage());
                 if (!player.isBowEquipped()) {

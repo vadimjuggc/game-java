@@ -18,6 +18,9 @@ public class SoundManager {
     private MediaPlayer slimeAttackSound;
     private MediaPlayer gameOverSound;
     private MediaPlayer youWinSound;
+    private MediaPlayer doubleKillSound;
+    private MediaPlayer tripleKillSound;
+    private MediaPlayer ultraKillSound;
 
     private SoundManager() {
         loadSounds();
@@ -42,6 +45,21 @@ public class SoundManager {
             if (clickUrl != null) {
                 Media clickMedia = new Media(clickUrl.toString());
                 clickSound = new MediaPlayer(clickMedia);
+            }
+
+            URL doubleUrl = getClass().getResource("/sounds/ui_sounds/double_kill.mp3");
+            if (doubleUrl != null) {
+                doubleKillSound = new MediaPlayer(new Media(doubleUrl.toString()));
+            }
+
+            URL tripleUrl = getClass().getResource("/sounds/ui_sounds/triple_kill.mp3");
+            if (tripleUrl != null) {
+                tripleKillSound = new MediaPlayer(new Media(tripleUrl.toString()));
+            }
+
+            URL ultraUrl = getClass().getResource("/sounds/ui_sounds/ultra_kill.mp3");
+            if (ultraUrl != null) {
+                ultraKillSound = new MediaPlayer(new Media(ultraUrl.toString()));
             }
 
             URL slimeAttackUrl = getClass().getResource("/sounds/slime/slime_attack_sound.mp3");
@@ -124,6 +142,19 @@ public class SoundManager {
             slimeAttackSound.stop();
             slimeAttackSound.seek(javafx.util.Duration.ZERO);
             slimeAttackSound.play();
+        }
+    }
+
+    public void playComboSound(int combo) {
+        MediaPlayer sound = null;
+        if (combo >= 5) sound = ultraKillSound;
+        else if (combo == 3 || combo == 4) sound = tripleKillSound;
+        else if (combo == 2) sound = doubleKillSound;
+
+        if (sound != null) {
+            sound.stop();
+            sound.seek(javafx.util.Duration.ZERO);
+            sound.play();
         }
     }
 

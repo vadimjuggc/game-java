@@ -25,11 +25,12 @@ public class Player extends Entity {
     private boolean movingLeft, movingRight;
     private boolean onGround = false;
     private double velocityY = 0;
-
+    private boolean canDealDamage = false;
     private int health = 100;
     private static final int MAX_HEALTH = 100;
     private boolean attacking = false;
-    private int attackCooldown = 0;
+    private double attackCooldown = 0;
+    private static final double ATTACK_COOLDOWN_MAX = 0.8;
     private int attackDamage = 25;
     private List<Arrow> arrows = new ArrayList<>();
 
@@ -288,7 +289,8 @@ public class Player extends Entity {
         if (keysPressed.contains(KeyCode.E) && attackCooldown <= 0 && !attacking) {
             if (isBowEquipped) return;
             attacking = true;
-            attackCooldown = 20;
+            canDealDamage = true;
+            attackCooldown = ATTACK_COOLDOWN_MAX;
             currentState = State.ATTACKING;
             gameWorld.spawnSlash(
                     x + (facingRight ? WIDTH + 10 : -20),
@@ -316,6 +318,31 @@ public class Player extends Entity {
         if (shootCooldown > 0) {
             shootCooldown -= deltaTime;
         }
+
+        if (attackCooldown > 0) {
+            attackCooldown -= deltaTime;
+
+            if (attackCooldown < ATTACK_COOLDOWN_MAX - 0.15) {
+                canDealDamage = false;
+                if (attacking) {
+                    attacking = false;
+                    currentState = State.IDLE;
+                    if (facingRight) {
+                        currentAnimation = idleRightAnimation;
+                        idleRightAnimation.play();
+                    } else {
+                        currentAnimation = idleLeftAnimation;
+                        idleLeftAnimation.play();
+                    }
+                    updateWeaponAnimation();
+                }
+            }
+
+            if (attackCooldown <= 0) {
+                attackCooldown = 0;
+            }
+        }
+
         if (movingRight && !movingLeft) {
             facingRight = true;
         } else if (movingLeft && !movingRight) {
@@ -387,32 +414,13 @@ public class Player extends Entity {
         if (movingRight) x += SPEED * deltaTime;
 
         velocityY += GRAVITY * deltaTime;
-        if (velocityY > 600) velocityY = 600; // ограничение скорости падения
+        if (velocityY > 600) velocityY = 600;
         y += velocityY * deltaTime;
 
-        // Границы расширенного мира
         if (x < 0) x = 0;
         if (x > Level.WORLD_WIDTH - WIDTH) x = Level.WORLD_WIDTH - WIDTH;
 
         setPosition(x, y);
-
-        if (attackCooldown > 0) {
-            attackCooldown--;
-            if (attackCooldown == 0) {
-                attacking = false;
-                currentState = State.IDLE;
-
-                if (facingRight) {
-                    currentAnimation = idleRightAnimation;
-                    idleRightAnimation.play();
-                } else {
-                    currentAnimation = idleLeftAnimation;
-                    idleLeftAnimation.play();
-                }
-
-                updateWeaponAnimation();
-            }
-        }
 
         if (currentAnimation != null) {
             currentAnimation.update(deltaTime);
@@ -472,12 +480,22 @@ public class Player extends Entity {
         velocityY = 0;
     }
 
+    public boolean isIdle() {
+        return currentState == State.IDLE;
+    }
+
     public boolean isDead() { return health <= 0; }
     public boolean isAttacking() { return attacking; }
     public int getAttackDamage() { return attackDamage; }
     public int getHealth() { return health; }
     public boolean isOnGround() { return onGround; }
     public void setOnGround(boolean onGround) { this.onGround = onGround; }
+    public boolean canDealDamage() { return canDealDamage; }
+
+    public double getAttackCooldownRatio() {
+        if (attackCooldown <= 0) return 1.0;
+        return 1.0 - (attackCooldown / ATTACK_COOLDOWN_MAX);
+    }
 
     public javafx.geometry.Bounds getAttackBounds() {
         double attackX = facingRight ? x + WIDTH : x - 30;
