@@ -22,7 +22,7 @@ import javafx.scene.control.Label;
 
 public class GameWorld {
 
-    private static final int WIN_SCORE = 300;
+    private static final int WIN_SCORE = 600;
 
     private static final double VIEW_W = 800;
     private static final double VIEW_H = 600;
@@ -70,6 +70,8 @@ public class GameWorld {
     private static final double DASH_BAR_H = 4;
     private double shakeDuration = 0;
     private double shakeIntensity = 0;
+    private double gameTimer = 0;
+    private List<DustParticle> dustParticles = new ArrayList<>();
 
     public GameWorld(Pane root, Runnable onMainMenuCallback) {
         this.root = root;
@@ -200,6 +202,8 @@ public class GameWorld {
     public void update(double deltaTime) {
         if (gameOver || gameWon) return;
         if (paused) return;
+        gameTimer += deltaTime;
+        gameUI.updateTimer(gameTimer);
         if (comboCount > 0) {
             comboTimer += deltaTime;
             if (comboTimer >= COMBO_TIMEOUT) {
@@ -278,6 +282,7 @@ public class GameWorld {
                 spawnBlood(enemy.getX() + enemy.getWidth() / 2, enemy.getY() + enemy.getHeight() / 2);
                 startShake(0.1, 3);
                 gameUI.addScore(points);
+                gameUI.addKill();
                 gameUI.showCombo(comboCount, comboMultiplier);
                 SoundManager.getInstance().playComboSound(comboCount);
 
@@ -317,6 +322,7 @@ public class GameWorld {
                 spawnBlood(ghost.getX() + ghost.getWidth() / 2, ghost.getY() + ghost.getHeight() / 2);
                 startShake(0.1, 3);
                 gameUI.addScore(points);
+                gameUI.addKill();
                 gameUI.showCombo(comboCount, comboMultiplier);
                 SoundManager.getInstance().playComboSound(comboCount);
 
@@ -348,6 +354,7 @@ public class GameWorld {
         }
         bloodParticles.removeIf(p -> !p.update(deltaTime));
         slashEffects.removeIf(s -> !s.update(deltaTime));
+        dustParticles.removeIf(p -> !p.update(deltaTime));
         landingParticles.removeIf(p -> !p.update(deltaTime));
         dashTrails.removeIf(t -> !t.update(deltaTime));
 
@@ -593,6 +600,7 @@ public class GameWorld {
         root.getChildren().add(vignetteOverlay);
 
         gameUI = new GameUI(root);
+        gameTimer = 0;
         SoundManager.getInstance().restartBackgroundMusic();
 
         for (int i = 0; i < 5; i++) {
@@ -618,9 +626,12 @@ public class GameWorld {
     }
 
     private void spawnLanding(double x, double y) {
-        int count = 7;
+        int count = 10;
         for (int i = 0; i < count; i++) {
             landingParticles.add(new LandingParticle(gamePane, x, y, i, count));
+        }
+        for (int i = 0; i < 8; i++) {
+            dustParticles.add(new DustParticle(gamePane, x, y));
         }
     }
 

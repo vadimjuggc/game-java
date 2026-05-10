@@ -20,12 +20,15 @@ public class GameUI {
     private Rectangle healthBarBg;
     private int score = 0;
     private Label comboLabel;
+    private Label timerLabel;
+    private Label killsLabel;
     private int comboCount = 0;
     private Rectangle arrowBar;
     private static final int MAX_ARROWS = 10;
     private ImageView weaponPopupIcon;
     private Label weaponPopupLabel;
     private javafx.animation.FadeTransition weaponFade;
+    private int kills = 0;
 
     private static final int MAX_HEALTH = 100;
     private static final double BAR_WIDTH = 120;
@@ -130,12 +133,37 @@ public class GameUI {
         weaponPopupLabel.setLayoutY(120);
         weaponPopupLabel.setOpacity(0);
 
+        // Таймер — правый верхний угол
+        timerLabel = new Label("⏱ 0:00");
+        timerLabel.setFont(Font.font("Palatino Linotype", FontWeight.BOLD, 20));
+        timerLabel.setTextFill(Color.rgb(210, 200, 170));
+        timerLabel.setStyle(
+                "-fx-background-color: rgba(0,0,0,0.25); " +
+                        "-fx-padding: 4 12 4 12; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-effect: dropshadow(gaussian, #000000, 5, 0.8, 0, 0);"
+        );
+        timerLabel.setLayoutX(800 - 120);
+        timerLabel.setLayoutY(10);
+
+// Счётчик килов — под таймером
+        killsLabel = new Label("☠ 0");
+        killsLabel.setFont(Font.font("Palatino Linotype", FontWeight.BOLD, 20));
+        killsLabel.setTextFill(Color.rgb(200, 80, 80));
+        killsLabel.setStyle(
+                "-fx-background-color: rgba(0,0,0,0.25); " +
+                        "-fx-padding: 4 12 4 12; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-effect: dropshadow(gaussian, #000000, 5, 0.8, 0, 0);"
+        );
+        killsLabel.setLayoutX(800 - 120);
+        killsLabel.setLayoutY(44);
+
         root.getChildren().addAll(
                 heartLabel, healthBarBg, healthBar, healthValueLabel,
                 arrowIcon, arrowBarBg, arrowBar, arrowsLabel,
                 scoreIcon, scoreLabel,
-                weaponPopupLabel, comboLabel
-        );
+                weaponPopupLabel, comboLabel, timerLabel, killsLabel);
     }
 
     public void updateHealth(int health) {
@@ -248,5 +276,25 @@ public class GameUI {
         });
         overlay.getChildren().addAll(winLabel, restartBtn, menuBtn);
         root.getChildren().add(overlay);
+    }
+
+    public void updateTimer(double totalSeconds) {
+        int minutes = (int) totalSeconds / 60;
+        int seconds = (int) totalSeconds % 60;
+        timerLabel.setText(String.format("⏱ %d:%02d", minutes, seconds));
+    }
+
+    public void addKill() {
+        kills++;
+        killsLabel.setText("☠ " + kills);
+        // Вспышка при новом киле
+        killsLabel.setTextFill(Color.rgb(255, 120, 120));
+        javafx.animation.PauseTransition flash = new javafx.animation.PauseTransition(javafx.util.Duration.millis(300));
+        flash.setOnFinished(e -> killsLabel.setTextFill(Color.rgb(200, 80, 80)));
+        flash.play();
+    }
+
+    public int getKills() {
+        return kills;
     }
 }
