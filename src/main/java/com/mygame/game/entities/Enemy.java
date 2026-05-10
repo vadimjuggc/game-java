@@ -1,6 +1,7 @@
 package com.mygame.game.entities;
 
 import com.mygame.game.GameWorld;
+import com.mygame.game.Level;
 import com.mygame.game.utils.FrameAnimation;
 import com.mygame.game.utils.SoundManager;
 import javafx.scene.image.Image;
@@ -39,6 +40,10 @@ public class Enemy extends Entity {
     private boolean hurt = false;
     private double hurtTimer = 0;
 
+    private double currentPlatformLeft = 0;
+    private double currentPlatformRight = Level.WORLD_WIDTH;
+    private boolean hasPlatformInfo = false;
+
     public boolean isAttacking() {
         return attacking;
     }
@@ -54,9 +59,14 @@ public class Enemy extends Entity {
         this.health = 40;
 
         loadAnimations();
-
         currentAnimation = idleAnimation;
         if (currentAnimation != null) { currentAnimation.play(); }
+    }
+
+    public void setCurrentPlatformBounds(double left, double right) {
+        this.currentPlatformLeft = left;
+        this.currentPlatformRight = right;
+        this.hasPlatformInfo = true;
     }
 
     private void loadAnimations() {
@@ -64,17 +74,18 @@ public class Enemy extends Entity {
         idleFrames.add(loadImage("/images/enemies/slime/idle/slime1.png"));
 
         List<Image> walkFrames = new ArrayList<>();
-        for (int i = 2; i <=8; i++) {
-            walkFrames.add(loadImage("/images/enemies/slime/walk/slime" + i +".png"));
+        for (int i = 2; i <= 8; i++) {
+            walkFrames.add(loadImage("/images/enemies/slime/walk/slime" + i + ".png"));
         }
-        List <Image> attackFrames = new ArrayList<>();
+        List<Image> attackFrames = new ArrayList<>();
         for (int i = 9; i <= 13; i++) {
-            attackFrames.add(loadImage("/images/enemies/slime/attack/slime" + i +".png"));
+            attackFrames.add(loadImage("/images/enemies/slime/attack/slime" + i + ".png"));
         }
-        List <Image> hurtFrames = new ArrayList<>();
+        List<Image> hurtFrames = new ArrayList<>();
         for (int i = 14; i <= 17; i++) {
-            hurtFrames.add(loadImage("/images/enemies/slime/hurt/slime" + i +".png"));
+            hurtFrames.add(loadImage("/images/enemies/slime/hurt/slime" + i + ".png"));
         }
+
         idleAnimation = new FrameAnimation(idleFrames, sprite);
         walkAnimation = new FrameAnimation(walkFrames, sprite);
         attackAnimation = new FrameAnimation(attackFrames, sprite);
@@ -122,7 +133,6 @@ public class Enemy extends Entity {
                     if (soundManager != null) {
                         soundManager.playHitSound();
                     }
-                    System.out.println("Враг нанёс урон!");
                 }
             }
 
@@ -131,24 +141,38 @@ public class Enemy extends Entity {
                 attackCooldown = 1.2;
                 currentAnimation = idleAnimation;
                 idleAnimation.play();
-                System.out.println("Атака завершена, перезарядка: " + attackCooldown);
             }
         }
 
         if (!attacking && !hurt && target != null && !target.isDead()) {
             double dx = target.getX() - x;
             double distance = Math.abs(dx);
-            double dy = Math.abs(target.getY() - y);
+            double dy = target.getY() - y;
 
-            if (distance < attackRange && dy < HEIGHT + 10 && attackCooldown <= 0) {
+            boolean playerBelow = (target.getY() + target.getHeight()) < (y - 40);
+
+            if (playerBelow && onGround && hasPlatformInfo) {
+                if (dx > 0) {
+                    x += SPEED * deltaTime;
+                    facingRight = true;
+                    if (x + WIDTH >= currentPlatformRight) {
+                        x = currentPlatformRight - WIDTH + 1;
+                    }
+                } else {
+                    x -= SPEED * deltaTime;
+                    facingRight = false;
+                    if (x <= currentPlatformLeft) {
+                        x = currentPlatformLeft - 1;
+                    }
+                }
+                currentAnimation = walkAnimation;
+            } else if (distance < attackRange && Math.abs(dy) < HEIGHT + 10 && attackCooldown <= 0) {
                 attacking = true;
                 damageDealt = false;
                 currentAnimation = attackAnimation;
                 attackAnimation.reset();
                 attackAnimation.play();
-                System.out.println("Враг начинает атаку! dy=" + dy);
-            }
-            else if (distance > 15) {
+            } else if (distance > 15) {
                 if (dx > 0) {
                     x += SPEED * deltaTime;
                     facingRight = true;
@@ -170,9 +194,10 @@ public class Enemy extends Entity {
         y += velocityY * deltaTime;
         setPosition(x, y);
 
-        if (y + HEIGHT > 600) {
-            y = 600 - HEIGHT;
+        if (y + HEIGHT > Level.WORLD_HEIGHT) {
+            y = Level.WORLD_HEIGHT - HEIGHT;
             velocityY = 0;
+            onGround = true;
             setPosition(x, y);
         }
 

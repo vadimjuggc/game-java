@@ -1,6 +1,7 @@
 package com.mygame.game.entities;
 
 import javafx.scene.image.Image;
+import com.mygame.game.Level;
 import javafx.scene.image.ImageView;
 import javafx.geometry.Bounds;
 
@@ -30,16 +31,16 @@ public class Arrow {
             sprite.setRotate(Math.toDegrees(angle));
         }
 
-        public void update(double deltaTime) {
-            x += velocityX * deltaTime;
-            y += velocityY * deltaTime;
-            sprite.setX(x);
-            sprite.setY(y);
+    public void update(double deltaTime) {
+        x += velocityX * deltaTime;
+        y += velocityY * deltaTime;
+        sprite.setX(x);
+        sprite.setY(y);
 
-            if (x < -50 || x > 850 || y < -50 || y > 650) {
-                active = false;
-            }
+        if (x < -50 || x > Level.WORLD_WIDTH + 50 || y < -50 || y > Level.WORLD_HEIGHT + 50) {
+            active = false;
         }
+    }
 
         public Bounds getBounds() {
             return sprite.getBoundsInParent();

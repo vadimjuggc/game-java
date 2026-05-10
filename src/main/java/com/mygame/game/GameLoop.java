@@ -11,8 +11,10 @@ public class GameLoop extends AnimationTimer {
     private GameWorld gameWorld;
     private Set<KeyCode> keysPressed = new HashSet<>();
 
-    public GameLoop(GameWorld gameWorld) {
+    public GameLoop(GameWorld gameWorld)
+    {
         this.gameWorld = gameWorld;
+        this.gameWorld.setKeysPressed(keysPressed);
     }
 
     public void setupKeyHandlers(Scene scene) {
@@ -47,8 +49,6 @@ public class GameLoop extends AnimationTimer {
 
         double deltaTime = (now - lastUpdate) / 1_000_000_000.0;
         lastUpdate = now;
-
-        gameWorld.getPlayer().handleInput(keysPressed);
 
         if (!gameWorld.isPaused()) {
             gameWorld.update(deltaTime);

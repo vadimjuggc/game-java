@@ -7,6 +7,9 @@ import java.util.List;
 
 public class Level {
     private static final double PLAYER_HEIGHT = 40;
+    public static final double WORLD_WIDTH = 2400;
+    public static final double WORLD_HEIGHT = 600;
+
     private List<Platform> platforms;
     private double startX, startY;
 
@@ -18,20 +21,31 @@ public class Level {
     private void createLevel() {
         platforms = new ArrayList<>();
 
-        // пол
+        // ===== ЦЕНТРАЛЬНАЯ ЗОНА (0–800) =====
         platforms.add(new Platform(0, 550, 800, 50));
-        // низкие
-        platforms.add(new Platform(100, 550 - 80, 120, 20));
-        platforms.add(new Platform(580, 550 - 80, 120, 20));
+        platforms.add(new Platform(100, 470, 120, 20));
+        platforms.add(new Platform(580, 470, 120, 20));
+        platforms.add(new Platform(340, 400, 120, 20));
+        platforms.add(new Platform(450, 350, 100, 20));
 
-        // средние (на 150 пкс выше пола)
-        platforms.add(new Platform(340, 550 - 150, 120, 20));
+        // ===== ПРАВАЯ ЗОНА (800–1600) =====
+        platforms.add(new Platform(800, 550, 800, 50));
+        platforms.add(new Platform(850, 470, 130, 20));
+        platforms.add(new Platform(1050, 400, 120, 20));
+        platforms.add(new Platform(1200, 460, 100, 20));
+        platforms.add(new Platform(1350, 350, 140, 20));
+        platforms.add(new Platform(1500, 470, 110, 20));
 
-        // высокие (на 200 пкс выше пола)
-        platforms.add(new Platform(450, 550 - 200, 100, 20));
+        // ===== ДАЛЬНЯЯ ПРАВАЯ ЗОНА (1600–2400) =====
+        platforms.add(new Platform(1600, 550, 800, 50));
+        platforms.add(new Platform(1650, 460, 120, 20));
+        platforms.add(new Platform(1820, 380, 130, 20));
+        platforms.add(new Platform(1980, 460, 100, 20));
+        platforms.add(new Platform(2100, 340, 150, 20));
+        platforms.add(new Platform(2250, 470, 110, 20));
 
         startX = 100;
-        startY = 550 - PLAYER_HEIGHT;  // 510
+        startY = 550 - PLAYER_HEIGHT;
     }
 
     public void addToPane(Pane root) {

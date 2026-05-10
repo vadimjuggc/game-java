@@ -1,5 +1,6 @@
 package com.mygame.game.entities;
 
+import com.mygame.game.Level;
 import com.mygame.game.utils.FrameAnimation;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -26,6 +27,7 @@ public class Player extends Entity {
     private double velocityY = 0;
 
     private int health = 100;
+    private static final int MAX_HEALTH = 100;
     private boolean attacking = false;
     private int attackCooldown = 0;
     private int attackDamage = 25;
@@ -72,20 +74,18 @@ public class Player extends Entity {
 
     public boolean isBowEquipped() { return isBowEquipped; }
 
+    public void heal(int amount) {
+        health = Math.min(health + amount, MAX_HEALTH);
+    }
+
     public void shootArrow() {
-        if (arrowsLeft <= 0) {
-            System.out.println("Нет стрел! arrowsLeft=" + arrowsLeft);
-            return;
-        }
-        if (!isBowEquipped) {
-            return;
-        }
+        if (arrowsLeft <= 0) return;
+        if (!isBowEquipped) return;
 
         SoundManager.getInstance().playBowShootSound();
 
         double directionX = facingRight ? 1 : -1;
-        double directionY = 0;
-        Arrow arrow = new Arrow(x + (facingRight ? WIDTH : -10), y + HEIGHT/2, directionX, directionY);
+        Arrow arrow = new Arrow(x + (facingRight ? WIDTH : -10), y + HEIGHT / 2, directionX, 0);
         arrows.add(arrow);
         arrowsLeft--;
     }
@@ -155,7 +155,6 @@ public class Player extends Entity {
         walkRightAnimation.setFrameDuration(0.1);
         idleLeftAnimation.setFrameDuration(0.15);
         walkLeftAnimation.setFrameDuration(0.1);
-
         attackRightAnimation.setFrameDuration(0.1);
         attackLeftAnimation.setFrameDuration(0.1);
         hurtRightAnimation.setFrameDuration(0.1);
@@ -190,7 +189,6 @@ public class Player extends Entity {
 
         List<Image> idleFrames = new ArrayList<>();
         idleFrames.add(swordImage);
-
         List<Image> swingFrames = new ArrayList<>();
         swingFrames.add(swordImage);
 
@@ -273,7 +271,6 @@ public class Player extends Entity {
         if (keysPressed.contains(KeyCode.TAB)) {
             isBowEquipped = !isBowEquipped;
             updateWeaponAnimation();
-            System.out.println(isBowEquipped ? "Лук экипирован" : "Меч экипирован");
         }
 
         if (keysPressed.contains(KeyCode.Q) && !attacking && shootCooldown <= 0) {
@@ -281,16 +278,11 @@ public class Player extends Entity {
                 shootArrow();
                 shootCooldown = SHOOT_DELAY;
                 playWeaponAttackAnimation();
-            } else {
-                System.out.println("Сейчас не лук, стрелять нельзя");
             }
         }
 
         if (keysPressed.contains(KeyCode.E) && attackCooldown <= 0 && !attacking) {
-            if (isBowEquipped) {
-                System.out.println("Сейчас лук, атака мечом недоступна");
-                return;
-            }
+            if (isBowEquipped) return;
 
             attacking = true;
             attackCooldown = 20;
@@ -327,6 +319,7 @@ public class Player extends Entity {
         } else {
             weaponSprite.setScaleX(1);
         }
+
         double weaponOffsetX;
         double weaponOffsetY;
 
@@ -350,16 +343,6 @@ public class Player extends Entity {
 
         weaponSprite.setX(x + weaponOffsetX);
         weaponSprite.setY(y + weaponOffsetY);
-
-        if (!onGround && !attacking && currentState != State.HURT) {
-            if (movingRight && currentAnimation != walkRightAnimation) {
-                currentAnimation = walkRightAnimation;
-                walkRightAnimation.play();
-            } else if (movingLeft && currentAnimation != walkLeftAnimation) {
-                currentAnimation = walkLeftAnimation;
-                walkLeftAnimation.play();
-            }
-        }
 
         if (!attacking && currentState != State.HURT) {
             if (movingRight) {
@@ -398,8 +381,9 @@ public class Player extends Entity {
         velocityY += GRAVITY * deltaTime;
         y += velocityY * deltaTime;
 
+        // Границы расширенного мира
         if (x < 0) x = 0;
-        if (x > 800 - WIDTH) x = 800 - WIDTH;
+        if (x > Level.WORLD_WIDTH - WIDTH) x = Level.WORLD_WIDTH - WIDTH;
 
         setPosition(x, y);
 

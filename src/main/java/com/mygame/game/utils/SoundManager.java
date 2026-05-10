@@ -14,6 +14,7 @@ public class SoundManager {
     private MediaPlayer backgroundMusic;
     private MediaPlayer swordSwingSound;
     private MediaPlayer swordHitSound;
+    private MediaPlayer healSound;
 
     private SoundManager() {
         loadSounds();
@@ -44,6 +45,12 @@ public class SoundManager {
             if (attackUrl != null) {
                 Media attackMedia = new Media(attackUrl.toString());
                 attackSound = new MediaPlayer(attackMedia);
+            }
+
+            URL healUrl = getClass().getResource("/sounds/heal.mp3");
+            if (healUrl != null) {
+                Media healMedia = new Media(healUrl.toString());
+                healSound = new MediaPlayer(healMedia);
             }
 
             URL bowUrl = getClass().getResource("/sounds/arrow.wav");
@@ -80,6 +87,14 @@ public class SoundManager {
             hitSound.stop();
             hitSound.seek(javafx.util.Duration.ZERO);
             hitSound.play();
+        }
+    }
+
+    public void playHealSound() {
+        if (healSound != null) {
+            healSound.stop();
+            healSound.seek(javafx.util.Duration.ZERO);
+            healSound.play();
         }
     }
 
