@@ -86,8 +86,10 @@ public class Ghost extends Entity {
 
                 if (attackCooldown <= 0) {
                     attackCooldown = 1.5;
-                    target.takeDamage(damage);
-                    if (soundManager != null) soundManager.playHitSound();
+                    if (!target.isInvincible()) {
+                        target.takeDamage(damage);
+                        if (soundManager != null) soundManager.playHitSound();
+                    }
                 }
             }
         }

@@ -22,6 +22,7 @@ public class SoundManager {
     private MediaPlayer tripleKillSound;
     private MediaPlayer ultraKillSound;
     private MediaPlayer footstepSound;
+    private MediaPlayer dashSound;
 
     private SoundManager() {
         loadSounds();
@@ -51,6 +52,12 @@ public class SoundManager {
             URL doubleUrl = getClass().getResource("/sounds/ui_sounds/double_kill.mp3");
             if (doubleUrl != null) {
                 doubleKillSound = new MediaPlayer(new Media(doubleUrl.toString()));
+            }
+
+            URL dashUrl = getClass().getResource("/sounds/character/walk/dash_sound.mp3");
+            if (dashUrl != null) {
+                dashSound = new MediaPlayer(new Media(dashUrl.toString()));
+                dashSound.setVolume(0.7);
             }
 
             URL tripleUrl = getClass().getResource("/sounds/ui_sounds/triple_kill.mp3");
@@ -149,6 +156,14 @@ public class SoundManager {
             footstepSound.stop();
             footstepSound.seek(javafx.util.Duration.ZERO);
             footstepSound.play();
+        }
+    }
+
+    public void playDashSound() {
+        if (dashSound != null) {
+            dashSound.stop();
+            dashSound.seek(javafx.util.Duration.ZERO);
+            dashSound.play();
         }
     }
 

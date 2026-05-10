@@ -1,6 +1,7 @@
 package com.mygame.game;
 
 import com.mygame.game.entities.*;
+import com.mygame.game.entities.DashTrail;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Pane;
 import com.mygame.game.utils.SoundManager;
@@ -58,11 +59,15 @@ public class GameWorld {
     private List<DarkParticle> darkParticles = new ArrayList<>();
     private double idleParticleTimer = 0;
     private List<LandingParticle> landingParticles = new ArrayList<>();
-
+    private List<DashTrail> dashTrails = new ArrayList<>();
     private Rectangle swordBarBg;
     private Rectangle swordBar;
     private static final double SWORD_BAR_W = 30;
     private static final double SWORD_BAR_H = 4;
+    private Rectangle dashBarBg;
+    private Rectangle dashBar;
+    private static final double DASH_BAR_W = 30;
+    private static final double DASH_BAR_H = 4;
     private double shakeDuration = 0;
     private double shakeIntensity = 0;
 
@@ -109,6 +114,20 @@ public class GameWorld {
         swordBar.setOpacity(0);
 
         gamePane.getChildren().addAll(swordBarBg, swordBar);
+
+        dashBarBg = new Rectangle(DASH_BAR_W, DASH_BAR_H);
+        dashBarBg.setFill(Color.rgb(20, 20, 50, 0.8));
+        dashBarBg.setArcWidth(3);
+        dashBarBg.setArcHeight(3);
+        dashBarBg.setOpacity(0);
+
+        dashBar = new Rectangle(DASH_BAR_W, DASH_BAR_H);
+        dashBar.setFill(Color.rgb(80, 40, 140));
+        dashBar.setArcWidth(3);
+        dashBar.setArcHeight(3);
+        dashBar.setOpacity(0);
+
+        gamePane.getChildren().addAll(dashBarBg, dashBar);
 
         vignetteOverlay = new Rectangle(VIEW_W, VIEW_H);
         vignetteOverlay.setFill(new RadialGradient(
@@ -168,6 +187,10 @@ public class GameWorld {
         ghost.setSoundManager(SoundManager.getInstance());
         ghosts.add(ghost);
         gamePane.getChildren().add(ghost.getSprite());
+    }
+
+    public void spawnDashTrail(double x, double y, double w, double h) {
+        dashTrails.add(new DashTrail(gamePane, x, y, w, h));
     }
 
     public void setKeysPressed(Set<KeyCode> keys) {
@@ -326,6 +349,7 @@ public class GameWorld {
         bloodParticles.removeIf(p -> !p.update(deltaTime));
         slashEffects.removeIf(s -> !s.update(deltaTime));
         landingParticles.removeIf(p -> !p.update(deltaTime));
+        dashTrails.removeIf(t -> !t.update(deltaTime));
 
         if (player.isIdle() && player.isOnGround()) {
             idleParticleTimer += deltaTime;
@@ -437,6 +461,25 @@ public class GameWorld {
             swordBar.setFill(Color.SILVER);
         }
 
+        double dashRatio = player.getDashCooldownRatio();
+        double dashBarX = player.getX() - 3;
+        double dashBarY = player.getY() - 16;
+
+        dashBarBg.setX(dashBarX);
+        dashBarBg.setY(dashBarY);
+        dashBar.setX(dashBarX);
+        dashBar.setY(dashBarY);
+        dashBar.setWidth(DASH_BAR_W * dashRatio);
+
+        if (dashRatio >= 1.0) {
+            dashBarBg.setOpacity(Math.max(0, dashBarBg.getOpacity() - 0.05));
+            dashBar.setOpacity(Math.max(0, dashBar.getOpacity() - 0.05));
+        } else {
+            dashBarBg.setOpacity(1.0);
+            dashBar.setOpacity(1.0);
+            dashBar.setFill(Color.rgb(80, 40, 140));
+        }
+
         gameUI.updateHealth(player.getHealth());
         gameUI.updateArrows(player.getArrowsLeft());
 
@@ -521,6 +564,20 @@ public class GameWorld {
         swordBar.setOpacity(0);
 
         gamePane.getChildren().addAll(swordBarBg, swordBar);
+
+        dashBarBg = new Rectangle(DASH_BAR_W, DASH_BAR_H);
+        dashBarBg.setFill(Color.rgb(20, 20, 50, 0.8));
+        dashBarBg.setArcWidth(3);
+        dashBarBg.setArcHeight(3);
+        dashBarBg.setOpacity(0);
+
+        dashBar = new Rectangle(DASH_BAR_W, DASH_BAR_H);
+        dashBar.setFill(Color.rgb(80, 40, 140));
+        dashBar.setArcWidth(3);
+        dashBar.setArcHeight(3);
+        dashBar.setOpacity(0);
+
+        gamePane.getChildren().addAll(dashBarBg, dashBar);
 
         vignetteOverlay = new Rectangle(VIEW_W, VIEW_H);
         vignetteOverlay.setFill(new RadialGradient(
@@ -746,6 +803,10 @@ public class GameWorld {
             }
 
             if (player.getSprite().getBoundsInParent().intersects(enemy.getSprite().getBoundsInParent())) {
+                if (!player.isDashing()) {
+                    player.takeDamage(enemy.getDamage());
+                    SoundManager.getInstance().playHitSound();
+                }
                 double dx = enemy.getX() - player.getX();
                 if (Math.abs(dx) > 0.01) {
                     double overlap = (player.getWidth() + enemy.getWidth()) / 2 - Math.abs(dx);
@@ -765,7 +826,10 @@ public class GameWorld {
             }
 
             if (player.getSprite().getBoundsInParent().intersects(ghost.getSprite().getBoundsInParent())) {
-                // contact damage handled inside ghost via attackCooldown
+                if (!player.isDashing()) {
+                    player.takeDamage(10);
+                    SoundManager.getInstance().playHitSound();
+                }
             }
         }
     }

@@ -67,6 +67,18 @@ public class Player extends Entity {
     private enum State { IDLE, WALKING, ATTACKING, HURT }
     private State currentState = State.IDLE;
 
+    private static final double DASH_SPEED = 600;
+    private static final double DASH_DURATION = 0.18;
+    private static final double DASH_COOLDOWN_MAX = 4.0;
+    private boolean dashing = false;
+    private double dashTimer = 0;
+    private double dashDirection = 1;
+    private double dashCooldown = 0;
+    private boolean dashInvincible = false;
+    private double dashTrailTimer = 0;
+    private double invincibleTimer = 0;
+    private static final double INVINCIBLE_DURATION = 0.8;
+
     private GameWorld gameWorld;
 
     public List<Arrow> getArrows() { return arrows; }
@@ -281,6 +293,17 @@ public class Player extends Entity {
             tabWasPressed = false;
         }
 
+        if (keysPressed.contains(KeyCode.SHIFT) && dashCooldown <= 0 && !dashing) {
+            dashing = true;
+            dashTimer = DASH_DURATION;
+            dashDirection = facingRight ? 1 : -1;
+            dashCooldown = DASH_COOLDOWN_MAX;
+            dashInvincible = true;
+            sprite.setOpacity(0.7);
+            weaponSprite.setOpacity(0.7);
+            SoundManager.getInstance().playDashSound();
+        }
+
         if (keysPressed.contains(KeyCode.Q) && !attacking && shootCooldown <= 0) {
             if (isBowEquipped) {
                 shootArrow();
@@ -346,10 +369,82 @@ public class Player extends Entity {
             }
         }
 
-        if (movingRight && !movingLeft) {
-            facingRight = true;
-        } else if (movingLeft && !movingRight) {
-            facingRight = false;
+        if (dashCooldown > 0) {
+            dashCooldown -= deltaTime;
+        }
+
+        if (invincibleTimer > 0) {
+            invincibleTimer -= deltaTime;
+            double blink = Math.sin(invincibleTimer * 20);
+            sprite.setOpacity(blink > 0 ? 1.0 : 0.3);
+            weaponSprite.setOpacity(blink > 0 ? 1.0 : 0.3);
+        } else if (!dashing) {
+            sprite.setOpacity(1.0);
+            weaponSprite.setOpacity(1.0);
+        }
+
+        if (dashing) {
+            dashTimer -= deltaTime;
+            dashTrailTimer += deltaTime;
+
+            if (dashTrailTimer >= 0.04) {
+                dashTrailTimer = 0;
+                if (gameWorld != null) {
+                    gameWorld.spawnDashTrail(x, y, WIDTH, HEIGHT);
+                }
+            }
+
+            x += dashDirection * DASH_SPEED * deltaTime;
+
+            if (dashTimer <= 0) {
+                dashing = false;
+                dashInvincible = false;
+                sprite.setOpacity(1.0);
+                weaponSprite.setOpacity(1.0);
+                dashCooldown = DASH_COOLDOWN_MAX;
+            }
+        } else {
+            if (movingRight && !movingLeft) {
+                facingRight = true;
+            } else if (movingLeft && !movingRight) {
+                facingRight = false;
+            }
+        }
+
+        if (!dashing) {
+            if (movingLeft) x -= SPEED * deltaTime;
+            if (movingRight) x += SPEED * deltaTime;
+        }
+
+        if (!dashing && !attacking && currentState != State.HURT) {
+            if (movingRight) {
+                if (currentState != State.WALKING) {
+                    currentState = State.WALKING;
+                    currentAnimation = walkRightAnimation;
+                    walkRightAnimation.play();
+                    idleRightAnimation.stop();
+                }
+            } else if (movingLeft) {
+                if (currentState != State.WALKING) {
+                    currentState = State.WALKING;
+                    currentAnimation = walkLeftAnimation;
+                    walkLeftAnimation.play();
+                    idleLeftAnimation.stop();
+                }
+            } else {
+                if (currentState != State.IDLE) {
+                    currentState = State.IDLE;
+                    if (facingRight) {
+                        currentAnimation = idleRightAnimation;
+                        idleRightAnimation.play();
+                        walkRightAnimation.stop();
+                    } else {
+                        currentAnimation = idleLeftAnimation;
+                        idleLeftAnimation.play();
+                        walkLeftAnimation.stop();
+                    }
+                }
+            }
         }
 
         if (facingRight) {
@@ -382,40 +477,6 @@ public class Player extends Entity {
         weaponSprite.setX(x + weaponOffsetX);
         weaponSprite.setY(y + weaponOffsetY);
 
-        if (!attacking && currentState != State.HURT) {
-            if (movingRight) {
-                if (currentState != State.WALKING) {
-                    currentState = State.WALKING;
-                    currentAnimation = walkRightAnimation;
-                    walkRightAnimation.play();
-                    idleRightAnimation.stop();
-                }
-            } else if (movingLeft) {
-                if (currentState != State.WALKING) {
-                    currentState = State.WALKING;
-                    currentAnimation = walkLeftAnimation;
-                    walkLeftAnimation.play();
-                    idleLeftAnimation.stop();
-                }
-            } else {
-                if (currentState != State.IDLE) {
-                    currentState = State.IDLE;
-                    if (facingRight) {
-                        currentAnimation = idleRightAnimation;
-                        idleRightAnimation.play();
-                        walkRightAnimation.stop();
-                    } else {
-                        currentAnimation = idleLeftAnimation;
-                        idleLeftAnimation.play();
-                        walkLeftAnimation.stop();
-                    }
-                }
-            }
-        }
-
-        if (movingLeft) x -= SPEED * deltaTime;
-        if (movingRight) x += SPEED * deltaTime;
-
         velocityY += GRAVITY * deltaTime;
         if (velocityY > 600) velocityY = 600;
         y += velocityY * deltaTime;
@@ -436,6 +497,11 @@ public class Player extends Entity {
     }
 
     public void takeDamage(int damage) {
+        if (dashInvincible) return;
+        if (invincibleTimer > 0) return;
+
+        invincibleTimer = INVINCIBLE_DURATION;
+
         health -= damage;
         if (health < 0) health = 0;
 
@@ -490,6 +556,17 @@ public class Player extends Entity {
 
     public boolean isIdle() {
         return currentState == State.IDLE;
+    }
+
+    public boolean isInvincible() {
+        return invincibleTimer > 0 || dashInvincible;
+    }
+
+    public boolean isDashing() { return dashing; }
+
+    public double getDashCooldownRatio() {
+        if (dashCooldown <= 0) return 1.0;
+        return 1.0 - (dashCooldown / DASH_COOLDOWN_MAX);
     }
 
     public boolean isDead() { return health <= 0; }
